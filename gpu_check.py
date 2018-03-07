@@ -31,8 +31,8 @@ def nvidia_smi_call():
 		line = line.decode()
 		if DEBUG:
 			print(line)
-		if "Attached GPUs" in line:
-			gid = int(line.split(':')[1].split()[0])
+		if "GPU 00000000" in line:
+			gid = int(line.split(':')[1])
 			print("Found GPU: {}".format(gid))
 			gpu_dict[gid] = GPU()
 			gpu_dict[gid].gid = gid
@@ -136,10 +136,11 @@ def gpu_monitor(miner_id):
 
 def main():
 	miner_id = sys.argv[1]
+	interval = sys.argv[2]
 	print("This is Miner: {}".format(miner_id))
 	while 1:
 		gpu_monitor(miner_id)
-		time.sleep(30)
+		time.sleep(interval)
 
 
 main()
