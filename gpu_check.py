@@ -19,6 +19,9 @@ class GPU():
 
 def nvidia_smi_call():
 
+	# DEBUG = True
+	DEBUG = False
+
 	gpu_dict = dict()
 
 	prev_line = None
@@ -101,8 +104,6 @@ def gpu_monitor(miner_id):
     	'miner6': 40,
     	'kai_test_miner': 47
 	}
-	# DEBUG = True
-	DEBUG = False
 
 	gpu_dict = nvidia_smi_call()
 	# gpu_dict = nvidia_smi_call_stub()
