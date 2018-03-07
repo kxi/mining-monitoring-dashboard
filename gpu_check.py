@@ -136,7 +136,7 @@ def gpu_monitor(miner_id):
 
 def main():
 	miner_id = sys.argv[1]
-	interval = sys.argv[2]
+	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
 	while 1:
 		gpu_monitor(miner_id)
