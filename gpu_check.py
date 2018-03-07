@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import gspread
 from datetime import datetime
 import time
@@ -90,7 +91,7 @@ def nvidia_smi_call_stub():
 
 
 
-def gpu_monitor():
+def gpu_monitor(miner_id):
 	sheet_row_start = {
     	'miner1': 2,
     	'miner2': 9,
@@ -114,9 +115,10 @@ def gpu_monitor():
 	# Make sure you use the right name here.
 	sheet = client.open("miner-dashboard").sheet1
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
+
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
-		row_start = sheet_row_start['kai_test_miner'] + idx
+		row_start = sheet_row_start[miner_id] + idx
 		range_build = 'B' + str(row_start) + ':J' + str(row_start)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
@@ -131,9 +133,13 @@ def gpu_monitor():
 		# Send update in batch mode
 		sheet.update_cells(cell_list)
 
+
 def main():
+	miner_id = sys.argv[1]
+	print("This is Miner: {}".format(miner_id))
 	while 1:
-		gpu_monitor()
+		gpu_monitor(miner_id)
 		time.sleep(30)
+
 
 main()
