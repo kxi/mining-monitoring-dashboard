@@ -119,7 +119,7 @@ def gpu_monitor(miner_id):
 
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
-		row_start = sheet_row_start[miner_id] + idx
+		row_start = sheet_row_start[miner_id]
 		range_build = 'B' + str(row_start + idx) + ':J' + str(row_start + idx)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
