@@ -104,8 +104,8 @@ def gpu_monitor(miner_id):
 	# DEBUG = True
 	DEBUG = False
 
-	# gpu_dict = nvidia_smi_call()
-	gpu_dict = nvidia_smi_call_stub()
+	gpu_dict = nvidia_smi_call()
+	# gpu_dict = nvidia_smi_call_stub()
 
 	# use creds to create a client to interact with the Google Drive API
 	scope = ['https://spreadsheets.google.com/feeds']
@@ -132,7 +132,6 @@ def gpu_monitor(miner_id):
 		cell_list[8].value = dt_now
 		# Send update in batch mode
 		sheet.update_cells(cell_list)
-
 
 def main():
 	miner_id = sys.argv[1]
