@@ -58,12 +58,12 @@ def nvidia_smi_call():
 			gpu_dict[gid].core_clock = core_clock
 
 		if "Power Draw" in line:
-			power_draw = line.split(':')[1].strip()
+			power_draw = line.split(':')[1].strip().strip('W')
 			print(power_draw)
 			gpu_dict[gid].power_draw = power_draw
 
 		if "Power Limit" == line.split(':')[0].strip():
-			power_limit = line.split(':')[1].strip()
+			power_limit = line.split(':')[1].strip().strip('W')
 			print(power_limit)
 			gpu_dict[gid].power_limit = power_limit
 
@@ -86,8 +86,8 @@ def nvidia_smi_call_stub():
 	gpu.utilization = 0.01
 	gpu.temp_curr = -5
 	gpu.core_clock = "1000 MHz"
-	gpu.power_draw = "99W"
-	gpu.power_limit = "100W"
+	gpu.power_draw = "99"
+	gpu.power_limit = "100"
 	gpu.fan_speed = "55%"
 
 	return gpu_dict
@@ -97,12 +97,12 @@ def nvidia_smi_call_stub():
 def gpu_monitor(miner_id):
 	sheet_row_start = {
     	'miner1': 2,
-    	'miner2': 9,
-    	'miner3': 16,
-    	'miner4': 23,
-    	'miner5': 32,
-    	'miner6': 40,
-    	'kai_test_miner': 47
+    	'miner2': 10,
+    	'miner3': 18,
+    	'miner4': 26,
+    	'miner5': 36,
+    	'miner6': 45,
+    	'kai_test_miner': 53
 	}
 
 	gpu_dict = nvidia_smi_call()
