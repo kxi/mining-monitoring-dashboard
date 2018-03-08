@@ -27,6 +27,9 @@ def nvidia_smi_call():
 	prev_line = None
 	process = subprocess.Popen("nvidia-smi.exe -a",stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
+
+	gpu_index = 1
+
 	for line in output.splitlines():
 		line = line.decode()
 		if DEBUG:
@@ -35,7 +38,8 @@ def nvidia_smi_call():
 			gid = int(line.split(':')[1])
 			print("Found GPU: {}".format(gid))
 			gpu_dict[gid] = GPU()
-			gpu_dict[gid].gid = gid
+			gpu_dict[gid].gid = gpu_index
+			gpu_index += 1
 
 		if "Product Name" in line:
 			model = line.split(':')[1].strip(" ")
@@ -117,10 +121,16 @@ def gpu_monitor(miner_id):
 	sheet = client.open("miner-dashboard").sheet1
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
+	range_build = sheet.range('J' + str(row_start))
+	cell_list = sheet.range(range_build)
+	cell_list[0].value = dt_now
+	sheet.update_cells(cell_list)
+
+
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
 		row_start = sheet_row_start[miner_id]
-		range_build = 'B' + str(row_start + idx) + ':J' + str(row_start + idx)
+		range_build = 'B' + str(row_start + idx) + ':I' + str(row_start + idx)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
 		cell_list[1].value = gpu.model
@@ -130,7 +140,7 @@ def gpu_monitor(miner_id):
 		cell_list[5].value = gpu.core_clock
 		cell_list[6].value = gpu.power_draw
 		cell_list[7].value = gpu.power_limit
-		cell_list[8].value = dt_now
+		
 		# Send update in batch mode
 		sheet.update_cells(cell_list)
 
@@ -138,8 +148,13 @@ def main():
 	miner_id = sys.argv[1]
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
+
 	while 1:
-		gpu_monitor(miner_id)
+		try:
+			gpu_monitor(miner_id)
+		except:
+			pass
+
 		time.sleep(interval)
 
 
