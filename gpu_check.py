@@ -36,44 +36,51 @@ def nvidia_smi_call():
 			print(line)
 		if "GPU 00000000" in line:
 			gid = int(line.split(':')[1])
-			print("Found GPU: {}".format(gid))
 			gpu_dict[gid] = GPU()
 			gpu_dict[gid].gid = gpu_index
+			print("Found GPU: #{}".format(gpu_dict[gid].gid))
 			gpu_index += 1
 
 		if "Product Name" in line:
 			model = line.split(':')[1].strip(" ")
-			print(model)
+			if DEBUG:
+				print(model)
 			gpu_dict[gid].model = model
 
 		if "Gpu" in line:
 			utilization = float(line.split(':')[1].split()[0])/100
-			print(utilization)
+			if DEBUG:
+				print(utilization)
 			gpu_dict[gid].utilization = utilization
 
 		if "GPU Current Temp" in line:
 			temp_curr = int(line.split(':')[1].split()[0])
-			print(temp_curr)
+			if DEBUG:
+				print(temp_curr)
 			gpu_dict[gid].temp_curr = temp_curr
 
 		if "Graphics" in line and prev_line.strip() == "Clocks":
 			core_clock = line.split(':')[1].strip()
-			print(core_clock)
+			if DEBUG:
+				print(core_clock)
 			gpu_dict[gid].core_clock = core_clock
 
 		if "Power Draw" in line:
 			power_draw = line.split(':')[1].strip().strip('W')
-			print(power_draw)
+			if DEBUG:
+				print(power_draw)
 			gpu_dict[gid].power_draw = power_draw
 
 		if "Power Limit" == line.split(':')[0].strip():
 			power_limit = line.split(':')[1].strip().strip('W')
-			print(power_limit)
+			if DEBUG:
+				print(power_limit)
 			gpu_dict[gid].power_limit = power_limit
 
 		if "Fan Speed" == line.split(':')[0].strip():
 			fan_speed = line.split(':')[1].strip()
-			print(fan_speed)
+			if DEBUG:
+				print(fan_speed)
 			gpu_dict[gid].fan_speed = fan_speed
 		prev_line = line
 
@@ -121,7 +128,8 @@ def gpu_monitor(miner_id):
 	sheet = client.open("miner-dashboard").sheet1
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-	range_build = sheet.range('J' + str(row_start))
+	row_start = sheet_row_start[miner_id]
+	range_build = 'J' + str(row_start)
 	cell_list = sheet.range(range_build)
 	cell_list[0].value = dt_now
 	sheet.update_cells(cell_list)
@@ -129,7 +137,6 @@ def gpu_monitor(miner_id):
 
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
-		row_start = sheet_row_start[miner_id]
 		range_build = 'B' + str(row_start + idx) + ':I' + str(row_start + idx)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
@@ -140,8 +147,9 @@ def gpu_monitor(miner_id):
 		cell_list[5].value = gpu.core_clock
 		cell_list[6].value = gpu.power_draw
 		cell_list[7].value = gpu.power_limit
-		
+
 		# Send update in batch mode
+		print("Start Sync to gspread")
 		sheet.update_cells(cell_list)
 
 def main():
@@ -153,6 +161,7 @@ def main():
 		try:
 			gpu_monitor(miner_id)
 		except:
+			print("Exception")
 			pass
 
 		time.sleep(interval)
