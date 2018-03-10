@@ -166,7 +166,6 @@ def main():
 	miner_id = sys.argv[1]
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
-	gpu_monitor(miner_id)
 
 	while 1:
 		try:
