@@ -14,6 +14,7 @@ class GPU():
 		self.core_clock = None
 		self.power_draw = None
 		self.power_limit = None
+		self.default_power_limit = None
 		self.fan_speed = None
 
 
@@ -71,11 +72,17 @@ def nvidia_smi_call():
 				print(power_draw)
 			gpu_dict[gid].power_draw = power_draw
 
-		if "Power Limit" == line.split(':')[0].strip():
+		if "Enforced Power Limit" == line.split(':')[0].strip():
 			power_limit = line.split(':')[1].strip().strip('W')
 			if DEBUG:
 				print(power_limit)
 			gpu_dict[gid].power_limit = power_limit
+
+		if "Default Power Limit" == line.split(':')[0].strip():
+			default_power_limit = line.split(':')[1].strip().strip('W')
+			if DEBUG:
+				print(default_power_limit)
+			gpu_dict[gid].default_power_limit = default_power_limit
 
 		if "Fan Speed" == line.split(':')[0].strip():
 			fan_speed = line.split(':')[1].strip()
@@ -99,6 +106,7 @@ def nvidia_smi_call_stub():
 	gpu.core_clock = "1000 MHz"
 	gpu.power_draw = "99"
 	gpu.power_limit = "100"
+	gpu.default_power_limit = "150"
 	gpu.fan_speed = "55%"
 
 	return gpu_dict
@@ -129,7 +137,7 @@ def gpu_monitor(miner_id):
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
 	row_start = sheet_row_start[miner_id]
-	range_build = 'J' + str(row_start)
+	range_build = 'L' + str(row_start)
 	cell_list = sheet.range(range_build)
 	cell_list[0].value = dt_now
 	sheet.update_cells(cell_list)
@@ -137,16 +145,18 @@ def gpu_monitor(miner_id):
 
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
-		range_build = 'B' + str(row_start + idx) + ':I' + str(row_start + idx)
+		range_build = 'B' + str(row_start + idx) + ':K' + str(row_start + idx)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
 		cell_list[1].value = gpu.model
 		cell_list[2].value = gpu.temp_curr
-		cell_list[3].value = gpu.fan_speed
-		cell_list[4].value = gpu.utilization
-		cell_list[5].value = gpu.core_clock
-		cell_list[6].value = gpu.power_draw
-		cell_list[7].value = gpu.power_limit
+		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
+		cell_list[4].value = gpu.fan_speed
+		cell_list[5].value = gpu.utilization
+		cell_list[6].value = gpu.core_clock
+		cell_list[7].value = gpu.power_draw
+		cell_list[8].value = gpu.power_limit
+		cell_list[9].value = gpu.default_power_limit
 
 		# Send update in batch mode
 		print("Start Sync to gspread")
@@ -156,6 +166,7 @@ def main():
 	miner_id = sys.argv[1]
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
+	gpu_monitor(miner_id)
 
 	while 1:
 		try:
