@@ -18,23 +18,19 @@ class GPU():
 		self.fan_speed = None
 
 
-def nvidia_smi_call():
-
-	# DEBUG = True
-	DEBUG = False
+def nvidia_smi_call(DEBUG = False):
 
 	gpu_dict = dict()
 
 	prev_line = None
-	process = subprocess.Popen("nvidia-smi.exe -a",stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	process = subprocess.Popen("nvidia-smi.exe -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
 
 	gpu_index = 1
 
 	for line in output.splitlines():
 		line = line.decode()
-		if DEBUG:
-			print(line)
+
 		if "GPU 00000000" in line:
 			gid = int(line.split(':')[1])
 			gpu_dict[gid] = GPU()
@@ -43,7 +39,7 @@ def nvidia_smi_call():
 			gpu_index += 1
 
 		if "Product Name" in line:
-			model = line.split(':')[1].strip(" ")
+			model = line.split(':')[1].replace("GeForce", "").strip(" ")
 			if DEBUG:
 				print(model)
 			gpu_dict[gid].model = model
@@ -113,7 +109,7 @@ def nvidia_smi_call_stub():
 
 
 
-def gpu_monitor(miner_id):
+def gpu_monitor(miner_id, DEBUG):
 	sheet_row_start = {
     	'miner1': 2,
     	'miner2': 10,
@@ -124,7 +120,7 @@ def gpu_monitor(miner_id):
     	'kai_test_miner': 53
 	}
 
-	gpu_dict = nvidia_smi_call()
+	gpu_dict = nvidia_smi_call(DEBUG)
 	# gpu_dict = nvidia_smi_call_stub()
 
 	# use creds to create a client to interact with the Google Drive API
@@ -167,14 +163,21 @@ def main():
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
 
+	if len(sys.argv) == 4 and sys.argv[3] == "debug":
+		DEBUG = True
+	else:
+		DEBUG = False
+
+	if DEBUG:
+		gpu_monitor(miner_id, DEBUG)
+
 	while 1:
 		try:
-			gpu_monitor(miner_id)
+			gpu_monitor(miner_id, DEBUG)
 		except:
 			print("Exception")
 			pass
 
 		time.sleep(interval)
-
 
 main()
