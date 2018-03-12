@@ -126,14 +126,14 @@ def gpu_monitor(miner_id, DEBUG):
 	# use creds to create a client to interact with the Google Drive API
 	scope = ['https://spreadsheets.google.com/feeds']
 	creds = ServiceAccountCredentials.from_json_keyfile_name('key.json', scope)
-	client = gspread.authorize(creds)
+	gc = gspread.authorize(creds)
 	# Find a workbook by name and open the first sheet
 	# Make sure you use the right name here.
-	sheet = client.open("miner-dashboard").sheet1
+	sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1EwzqCCLXVznobht-8LG-sDWapaLlLrzn6jlsLcRyJnI").sheet1
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
 	row_start = sheet_row_start[miner_id]
-	range_build = 'L' + str(row_start)
+	range_build = 'L' + str(row_start) + ':' + 'L' + str(row_start)
 	cell_list = sheet.range(range_build)
 	cell_list[0].value = dt_now
 	sheet.update_cells(cell_list)
