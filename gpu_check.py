@@ -150,9 +150,9 @@ def gpu_monitor(miner_id, DEBUG):
 		cell_list[4].value = gpu.fan_speed
 		cell_list[5].value = gpu.utilization
 		cell_list[6].value = gpu.core_clock
-		cell_list[7].value = gpu.power_draw
-		cell_list[8].value = gpu.power_limit
-		cell_list[9].value = gpu.default_power_limit
+		cell_list[7].value = int(gpu.power_draw)
+		cell_list[8].value = int(gpu.power_limit)
+		cell_list[9].value = int(gpu.default_power_limit)
 
 		# Send update in batch mode
 		print("Start Sync to gspread")
