@@ -108,6 +108,56 @@ def nvidia_smi_call_stub():
 	return gpu_dict
 
 
+def check_miner(DEBUG):
+
+	miner_process_count = 0
+	process = subprocess.Popen("tasklist /V", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	output, error = process.communicate()
+
+	miner = ""
+
+	for line in output.splitlines():
+
+		line = line.decode(errors='ignore')
+
+		if "miner" and "Zec" in line:
+			miner_process_count += 1
+			if DEBUG:
+				print("EWBF Equihash Miner")
+			miner = "EWBF(Equihash)"
+
+		if "zm.exe" in line:
+			miner_process_count += 1
+			if DEBUG:
+				print("DSTM Equihash Miner")
+			miner = "DSTM(Equihash)"
+
+		if "ccminer" in line:
+			miner_process_count += 1
+			if DEBUG:
+				print("CC Miner")
+			miner = "CC Miner"
+
+		if "excavator" in line:
+			miner_process_count += 1
+			if DEBUG:
+				print("Excavator(Nicehash)")
+			miner = "Excavator(Nicehash)"
+
+		if "Claymore" in line:
+			miner_process_count += 1
+			if DEBUG:
+				print("Claymore")
+			miner = "Claymore Dual Miner"
+
+
+	if miner_process_count == 0:
+		if DEBUG:
+			print("No Miner is Running")
+		miner = "Not Running"
+
+	return miner
+
 
 def gpu_monitor(miner_id, DEBUG):
 	sheet_row_start = {
@@ -119,6 +169,17 @@ def gpu_monitor(miner_id, DEBUG):
     	'miner6': 45,
     	'kai_test_miner': 53
 	}
+
+	miner_row_start = {
+    	'miner1': 7,
+    	'miner2': 15,
+    	'miner3': 24,
+    	'miner4': 31,
+    	'miner5': 41,
+    	'miner6': 50,
+    	'kai_test_miner': 54
+	}
+
 
 	gpu_dict = nvidia_smi_call(DEBUG)
 	# gpu_dict = nvidia_smi_call_stub()
@@ -132,6 +193,17 @@ def gpu_monitor(miner_id, DEBUG):
 	sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1EwzqCCLXVznobht-8LG-sDWapaLlLrzn6jlsLcRyJnI").sheet1
 	dt_now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
+
+	# Miner Type
+	miner = check_miner(DEBUG)
+	row_start =miner_row_start[miner_id]
+	miner_range_build = 'A' + str(row_start) + ':' + 'A' + str(row_start)
+	cell_list = sheet.range(miner_range_build)
+	cell_list[0].value = miner
+	sheet.update_cells(cell_list)
+
+
+	# Script Run Time
 	row_start = sheet_row_start[miner_id]
 	range_build = 'L' + str(row_start) + ':' + 'L' + str(row_start)
 	cell_list = sheet.range(range_build)
