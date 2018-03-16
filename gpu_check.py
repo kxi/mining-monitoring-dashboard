@@ -316,13 +316,13 @@ def main():
 	if DEBUG:
 		gpu_monitor(miner_id, DEBUG)
 
-	# while 1:
-	# 	try:
-	# 		gpu_monitor(miner_id, DEBUG)
-	# 	except:
-	# 		print("Exception")
-	# 		pass
-	#
-	# 	time.sleep(interval)
+	while 1:
+		try:
+			gpu_monitor(miner_id, DEBUG)
+		except:
+			print("Exception")
+			pass
+
+		time.sleep(interval)
 
 main()
