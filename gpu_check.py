@@ -230,7 +230,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 
 		# Smart Power Logic
-		ENABLE_SMART_POWER_FLAG = sheet.acell('S' + str(row_start)).value
+		ENABLE_SMART_POWER_FLAG = sheet.acell('S' + str(row_start  + idx)).value
 
 		# IF Power AI Strategy is Enabled
 		if ENABLE_SMART_POWER_FLAG == "Y":
