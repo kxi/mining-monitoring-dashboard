@@ -251,7 +251,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 				print("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
 				pass
 
-			power_delta = int(gpu.default_power_limit * 0.05)
+			power_delta = int(gpu.default_power_limit * 0.02)
 
 			if gpu.temp_curr < temperature_lb:
 				if gpu.power_limit <= pw_limit_ub * float(gpu.default_power_limit):
