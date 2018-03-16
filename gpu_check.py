@@ -3,7 +3,6 @@ import sys
 import gspread
 from datetime import datetime
 import time
-from power_ai import PowerAI
 from oauth2client.service_account import ServiceAccountCredentials
 
 class GPU():
