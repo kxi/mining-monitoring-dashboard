@@ -3,6 +3,7 @@ import sys
 import gspread
 from datetime import datetime
 import time
+from power_ai import PowerAI
 from oauth2client.service_account import ServiceAccountCredentials
 
 class GPU():
@@ -16,7 +17,7 @@ class GPU():
 		self.power_limit = None
 		self.default_power_limit = None
 		self.fan_speed = None
-
+		self.power_ai = None
 
 def nvidia_smi_call(DEBUG = False):
 
@@ -159,7 +160,7 @@ def check_miner(DEBUG):
 	return miner
 
 
-def gpu_monitor(miner_id, DEBUG):
+def gpu_monitor(miner_id, DEBUG = False):
 	sheet_row_start = {
     	'miner1': 2,
     	'miner2': 10,
@@ -183,6 +184,8 @@ def gpu_monitor(miner_id, DEBUG):
 
 	gpu_dict = nvidia_smi_call(DEBUG)
 	# gpu_dict = nvidia_smi_call_stub()
+
+
 
 	# use creds to create a client to interact with the Google Drive API
 	scope = ['https://spreadsheets.google.com/feeds']
@@ -223,17 +226,87 @@ def gpu_monitor(miner_id, DEBUG):
 		cell_list[5].value = gpu.utilization
 		cell_list[6].value = gpu.core_clock
 		cell_list[7].value = gpu.power_draw
-		cell_list[8].value = gpu.power_limit
+#		cell_list[8].value = gpu.power_limit
 		cell_list[9].value = gpu.default_power_limit
+
+
+		# Smart Power Logic
+		ENABLE_SMART_POWER_FLAG = sheet.acell('S' + str(row_start)).value
+
+		# IF Power AI Strategy is Enabled
+		if ENABLE_SMART_POWER_FLAG == "Y":
+			print("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
+
+			device_id = gpu.gid - 1
+
+			if gpu.utilization < 0.3:
+				print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
+
+			temperature_lb = int(sheet.acell('O' + str(row_start + idx)).value)
+			temperature_ub = int(sheet.acell('P' + str(row_start + idx)).value)
+			pw_limit_lb = float(sheet.acell('Q' + str(row_start + idx)).value)
+			pw_limit_ub = float(sheet.acell('R' + str(row_start + idx)).value)
+
+			# Just in Case, Wrong Value in Spreadsheet
+			if temperature_lb > 65 or pw_limit_lb < 0.5 or pw_limit_ub > 0.9:
+				print("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
+				pass
+
+			power_delta = int(gpu.default_power_limit * 0.05)
+
+			if gpu.temp_curr < temperature_lb:
+				if gpu.power_limit <= pw_limit_ub * float(gpu.default_power_limit):
+					print("GPU #{}: Temperature is Too Low, Power Up. \
+					 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+					new_power_limit = min(int(gpu.power_limit) + power_delta, gpu.default_power_limit)
+
+					process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+					output, error = process.communicate()
+					print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
+
+					gpu.power_limit = str(new_power_limit)
+
+
+				else:
+					print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
+					  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+
+
+			if gpu.temp_curr >= temperature_ub:
+				if gpu.power_limit > pw_limit_lb * float(gpu.default_power_limit):
+					print("GPU #{}: Temperature is Too High, Power Down. \
+					 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+					new_power_limit = max(int(gpu.power_limit) - power_delta, int(gpu.default_power_limit * 0.5))
+
+					process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+					output, error = process.communicate()
+					print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
+
+					gpu.power_limit = str(new_power_limit)
+
+				else:
+					print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
+					Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+
+
+			if gpu.temp_curr < temperature_ub and \
+				gpu.temp_curr > temperature_lb:
+				print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
+
+		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
+		cell_list[8].value = gpu.power_limit
 
 		# Send update in batch mode
 		print("Start Sync to gspread")
 		sheet.update_cells(cell_list)
 
+
 def main():
 	miner_id = sys.argv[1]
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
+
+
 
 	if len(sys.argv) == 4 and sys.argv[3] == "debug":
 		DEBUG = True
@@ -243,13 +316,13 @@ def main():
 	if DEBUG:
 		gpu_monitor(miner_id, DEBUG)
 
-	while 1:
-		try:
-			gpu_monitor(miner_id, DEBUG)
-		except:
-			print("Exception")
-			pass
-
-		time.sleep(interval)
+	# while 1:
+	# 	try:
+	# 		gpu_monitor(miner_id, DEBUG)
+	# 	except:
+	# 		print("Exception")
+	# 		pass
+	#
+	# 	time.sleep(interval)
 
 main()
