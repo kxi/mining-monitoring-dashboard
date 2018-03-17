@@ -268,7 +268,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 				power_delta_dec = int(gpu.default_power_limit * 0.03)
 
 
-				if gpu.temp_curr <= temperature_lb:
+				if gpu.temp_curr < temperature_lb:
 					if gpu.power_limit <= pw_limit_ub * float(gpu.default_power_limit):
 						print("GPU #{}: Temperature is Too Low, Power Up. \
 						 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
@@ -313,7 +313,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 
 				if gpu.temp_curr < temperature_ub and \
-					gpu.temp_curr > temperature_lb:
+					gpu.temp_curr >= temperature_lb:
 					print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
 					sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/YLDGZwvCqW5FocPEvAWEubrcJcie79_YQSXGs5mt4-LRpTg6Wtxyzbuqjka2FgS-IhOZr9GWHbKwVJVwLWimCPAIgPfCDPxX--sSmGnaMncp78AmWbDpQiecLa3G01kWlIFwDSagy6QE_dzs5fnr6CV6owsDQ_-rVnHlRorRy_JrUbA3oGsRDk-T5-h0C3RPpzleubA1q1xXzjmERgu4J1A7hExFB8TimZthmLj_QwMlP5VN6gg50nyhIRmsjYWZLChAVZRAo7IXt3ajaQavYldsSbiAdhpEbZmpiAvXUbPjzaCCSLFAZ_Jo1sDtdPDcLiflLUHRi_J9cnESvjU60Tb2YO8r1SZ7k1ikRswNE8917zph-JiOWqhAuBHDRTAA6-gwtDLy-SUEDTzBv9m2Kn0bh1IiWUdLCApSczAaVY9pB3gqgSkvju1dmf2gfOhNxEv58mc5R35CT4hIeO5HdmFZ48E_3jzD-JBXwBF_UQmff_x3fXqV7pDbv26d0L0StZTGab1QDtR_z_rON01PxmPYeWz9_cBCHUCBhh3HKB65xug9hl4oguXwEahsu8mLlTCg68-E9MFFkG4jLgqaUrnAzXqGiA_RwEw6DuQ=w124-h93-no",4,15,15)')
 
