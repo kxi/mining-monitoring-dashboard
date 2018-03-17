@@ -180,6 +180,11 @@ def gpu_monitor(miner_id, DEBUG = False):
     	'kai_test_miner': 54
 	}
 
+	up_icon_img_url = "https://lh3.googleusercontent.com/HvZR7aG3Qte4dq948AnZxxBPgE9dY89K9gUV5wxtle3QXXzJpxmX-eSr5im-tmkR-LWiFGiOVMNMMGiJyJIN2FLLQsthFZqJr51vI2ycGDRDFtPxWBXarz6ZWDGr40-bUC6qbslhm1sOMnx9VJXFHZvHRKajG1UUmEMF10QLKcANJ7Jkl6ovc4Ql1bPinqxf94Fc85N8hZ1Sh1YS9OsY9949kTOruXs16nT75lSjaNDJVOHVk1QPmYVFVmZwXL5-zfPuTJDsN4yE9YPlRazhNsy4zvF597wT6--u4geTF6UowJR1nqkeiAgJrwnH9MxKGOAUdgZhoGlWQJRXqahl4hFJPcy61EbNbyBXUEnSuaF2N1PSE3PD0kTE7vq9EFLOtGEtd69ddwTLfT6zqkkVI7dmpZ-nFj9AdRx969wYfq7FT_cOqA5CE26g4JDVGfKIghmdBOnQXEjjpZ1HpKovceSUJsCA_3uGQYECUYIFek2u-Pqz5gidqkDerNIHnZHHT4vYtXVtbO2Ui3tx8Fek9nnN5cIR0KjRjFj8ISTzib9juKQP7WdeNUuiqRhP63suU_eZFISZbbBAGrEMpS033VAthquwRzS0hABvyvLguY_xya6KGU_SaiCEp-aWoY8OpdcQB1ARxPUIVhprlk2z0NC_5eKDgr48=w94-h125-no"
+
+	down_icon_img_url = "https://lh3.googleusercontent.com/f2ppmFMrKJ6GGs1R_Bpltnq93lqed7AHlgdsH9dVVrTz_zrUyoYFg9A_Mmuecp5T_L2Q6DnGrd1IdxfpgXiWagj0wXepDTwne_by2xZZqPz1IUs5uPmEsM67veHigXpEo3GoljJQDAUbcHATLfkXIgyqlpuIlmoHzpFdTEpGq1zVXqWCHMKtOaSDB-W1_rmimPgeroE3Dqq-_-Jxl9qgNFx2KA5_CG_grwA7bVvSDT3g7KSzvv9CwbI2eJL1skQN5Ij_CI7ic7c0emPxxGEhSApen32yRsAK9yFEmPG9Y6qwxGdSkQivJo8PuKTXUzmc83YJ4tbQRDqqY42ZLadTyhztuXPSsLLc0v_-giRfmPsYhcDjxTDV2TFfeDj6bmchc5OUPeFNLT4ID0c6uU2jp7QSDuLNkUIXXSAKGjQ9M04AWOcQ1YPLSEUsvoYeu3F2kcxq3Y_rw3kD_3GhL4Ac7MgBuyiSfBz3zt_ce6xr-3FMzU0yGOTa9TDcysH_X9NgM0taPrxbLvfbpyO4tvZ_5EWeQeOms-8lgElcWaBRmPDrx9gwOZVVUq4p9eTts1x0Noq31cC7CF8lefQyxN6YeYEyQmKeAr-YntbzVag=w94-h128-no"
+
+	stable_icon_img_url = "https://lh3.googleusercontent.com/IxfVmqtbMMbzXChQ2DcYUxZMqjoW0GFFcvJ24is7J9QhxotYQlOJuXj0NM1Tgwx7yDyQAfLm4h8lzz4PD8i-b0X_qgvG_F4dprACTATdb8v_UkN863wsowAN3EJYUqvfp4o-qU-vA71J7NEgLAireoSzTvmJZQw6iiE1EV7t1v5tevIUBKroLeV080pFvkA-qAdgdq3JxOpwRV3kLBPBxvqfVe7CXNgX1GlquMYd61HMMjgb3cOWJSUiXdDY56XNIGgByuRb3f7PG32pupfpK0Oh2PwLJwCX_7ruvBMckGPofDyv--uVyBx6-6G2aZwhn5bzw4r952MQN4P_ODgrFYuoRozayAxz1bPbqt0rPXHoOmkTV6fytWI_p853QKgH2sQmA2i1TyBcI0hlV1Sqg4Nhj86iY0OhmtYQIDDrY9R0U7iJFkb-CDddFVs-u-dw0a166wIjaqXbnEFeYD5GfPncRZ39CAio8FRmqRhgkuwvW98iak50FgJS9DFbFoiimQvhxzXj7cyu9q8X8WN-frxpJuIIMdXDukNldxbWmRTlJEIviAMe2mT0uvACHQspzHpCOuSL0x4Qtx6blEG4BRHjVRFNnD4KJ7VoNm7GUbgzo8zvftWVFFxWXpEHGvuLjKR07Q4PVpX3OnS6x6lQxsfP0-XgoMQk=w124-h93-no"
 
 	gpu_dict = nvidia_smi_call(DEBUG)
 	# gpu_dict = nvidia_smi_call_stub()
@@ -240,7 +245,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 			if gpu.utilization < 0.3:
 				print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-				sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/YLDGZwvCqW5FocPEvAWEubrcJcie79_YQSXGs5mt4-LRpTg6Wtxyzbuqjka2FgS-IhOZr9GWHbKwVJVwLWimCPAIgPfCDPxX--sSmGnaMncp78AmWbDpQiecLa3G01kWlIFwDSagy6QE_dzs5fnr6CV6owsDQ_-rVnHlRorRy_JrUbA3oGsRDk-T5-h0C3RPpzleubA1q1xXzjmERgu4J1A7hExFB8TimZthmLj_QwMlP5VN6gg50nyhIRmsjYWZLChAVZRAo7IXt3ajaQavYldsSbiAdhpEbZmpiAvXUbPjzaCCSLFAZ_Jo1sDtdPDcLiflLUHRi_J9cnESvjU60Tb2YO8r1SZ7k1ikRswNE8917zph-JiOWqhAuBHDRTAA6-gwtDLy-SUEDTzBv9m2Kn0bh1IiWUdLCApSczAaVY9pB3gqgSkvju1dmf2gfOhNxEv58mc5R35CT4hIeO5HdmFZ48E_3jzD-JBXwBF_UQmff_x3fXqV7pDbv26d0L0StZTGab1QDtR_z_rON01PxmPYeWz9_cBCHUCBhh3HKB65xug9hl4oguXwEahsu8mLlTCg68-E9MFFkG4jLgqaUrnAzXqGiA_RwEw6DuQ=w124-h93-no",4,15,15)')
+				sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 			else:
 				temperature_lb = int(sheet.acell('O' + str(row_start + idx)).value)
@@ -278,7 +283,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						output, error = process.communicate()
 						print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
 
-						sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/DXCOc9NZQ_aYEt6wDp0xOQU76xxVajegVFSWikuZg7vxF34zeFtQSauE7e06yTdt0eMhyWq0HTJ9g_4vcgI2DFMcRtZW24sKyUBMy4InoafJiE9xr-MpG4IWlbXOfbHUeNnNkmIMfqTTIuiz5xJhw-QhoaB4Huh8CPnZlIiBk30e2Vz09p7MdLdiBLgoEGGqhXp6a3XQyVK_l4kVlR1PJ1hw0qanPmvhu-C3bn_l1yrxlMNZnaOsm5JFLGIYrRgrJOYrUDMYZ-MB2CS14SPfE0KkdVS04673SHoy8c7r9CZjGCirTvEmr2tPPM-PVv8ZwMZrZt5nuRJrrr3VsV6Gibl1hyFCXoLz-h4XpqJVJ_67mTpIY-VWosB73dxZDXdEHeg5g2sr6SwMgb2HslFK597QGYpSEOrIQdtYHie8Xhe-Ws_xRy5OhvAShTWkej9Y-KmVrcAKw1QxG_jf0iDSbznLb7qwjZwqplYi9iAex1QwN0gcW7F4LcfTqMQhXFsjJssfyyD7qtadUjeVzzap6FNAVwk_hUuagU1CTjD8-7PYBTe8etmduBN78Ia2MNvyWlx6ivDN67UEv3O__nB_xad_3h4WwS2-PMCILT4=w94-h125-no",4,15,15)')
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
 						gpu.power_limit = str(new_power_limit)
 
@@ -287,8 +292,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
 						  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 
-						sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/YLDGZwvCqW5FocPEvAWEubrcJcie79_YQSXGs5mt4-LRpTg6Wtxyzbuqjka2FgS-IhOZr9GWHbKwVJVwLWimCPAIgPfCDPxX--sSmGnaMncp78AmWbDpQiecLa3G01kWlIFwDSagy6QE_dzs5fnr6CV6owsDQ_-rVnHlRorRy_JrUbA3oGsRDk-T5-h0C3RPpzleubA1q1xXzjmERgu4J1A7hExFB8TimZthmLj_QwMlP5VN6gg50nyhIRmsjYWZLChAVZRAo7IXt3ajaQavYldsSbiAdhpEbZmpiAvXUbPjzaCCSLFAZ_Jo1sDtdPDcLiflLUHRi_J9cnESvjU60Tb2YO8r1SZ7k1ikRswNE8917zph-JiOWqhAuBHDRTAA6-gwtDLy-SUEDTzBv9m2Kn0bh1IiWUdLCApSczAaVY9pB3gqgSkvju1dmf2gfOhNxEv58mc5R35CT4hIeO5HdmFZ48E_3jzD-JBXwBF_UQmff_x3fXqV7pDbv26d0L0StZTGab1QDtR_z_rON01PxmPYeWz9_cBCHUCBhh3HKB65xug9hl4oguXwEahsu8mLlTCg68-E9MFFkG4jLgqaUrnAzXqGiA_RwEw6DuQ=w124-h93-no",4,15,15)')
-
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 
 				if gpu.temp_curr >= temperature_ub:
@@ -301,21 +305,20 @@ def gpu_monitor(miner_id, DEBUG = False):
 						output, error = process.communicate()
 						print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
 						gpu.power_limit = str(new_power_limit)
-						sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/ol3MTFbh2r4KeFwOt3lQ_5b-QKtPGgEwmuaHpHJ5988OvVKskhto-sJL8MNtdmzWI_YwJFx3CKoaW7ies7umXIVqhfjxe6ZQxcna8aPyvf8DMyZlvkx67hVQ_c6y30h_yIJWb3K0uM_pDOXtpIBcOs_Edt0U3JafEpP-DMCQ_j46oVXV1VpMVggCRTh3kXExj-Hb9OwZW9FVrl7hcGFSXog1UKF0VnlGpUumOLEaWEHg8PUVjwJiXeJvWQ9ibkEtPwpAGcDvDvLLL0UhZtX9b3OiwVVDi2Rge7fbWoAcXJ2ozl_1wdfcIJ68n1k8vp-u_yUWOFyV8qBdpmnK3ekH9Pz4ljgrkCuwmcjNZg63n3g_3BLQ1wGSVP6e6Bez9ZLZGPg80yQUv-Z-hHTMIVZtV1Wrp-0WcXDLk44Rvle6Lct_UVp2wXje_gaMEbHxjCqXTfrVEeMxQGTPpB8MILAawdz238ctD6g9GIJZemgnabsV3XcgeqLC3AaIUVyBwAgprHxk64H2FNrZQQs5xLEr0gHsnStWV2uorIsKAMj7-RykE-DB6VQWqWLBTrUb8AKL0kw4cE-392R1hDgHNBjmSqeDAmCdidyk9a_tqCk=w94-h128-no",4,15,15)')
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 
 
 					else:
 						print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
 						Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-						sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/YLDGZwvCqW5FocPEvAWEubrcJcie79_YQSXGs5mt4-LRpTg6Wtxyzbuqjka2FgS-IhOZr9GWHbKwVJVwLWimCPAIgPfCDPxX--sSmGnaMncp78AmWbDpQiecLa3G01kWlIFwDSagy6QE_dzs5fnr6CV6owsDQ_-rVnHlRorRy_JrUbA3oGsRDk-T5-h0C3RPpzleubA1q1xXzjmERgu4J1A7hExFB8TimZthmLj_QwMlP5VN6gg50nyhIRmsjYWZLChAVZRAo7IXt3ajaQavYldsSbiAdhpEbZmpiAvXUbPjzaCCSLFAZ_Jo1sDtdPDcLiflLUHRi_J9cnESvjU60Tb2YO8r1SZ7k1ikRswNE8917zph-JiOWqhAuBHDRTAA6-gwtDLy-SUEDTzBv9m2Kn0bh1IiWUdLCApSczAaVY9pB3gqgSkvju1dmf2gfOhNxEv58mc5R35CT4hIeO5HdmFZ48E_3jzD-JBXwBF_UQmff_x3fXqV7pDbv26d0L0StZTGab1QDtR_z_rON01PxmPYeWz9_cBCHUCBhh3HKB65xug9hl4oguXwEahsu8mLlTCg68-E9MFFkG4jLgqaUrnAzXqGiA_RwEw6DuQ=w124-h93-no",4,15,15)')
-
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 
 				if gpu.temp_curr < temperature_ub and \
 					gpu.temp_curr >= temperature_lb:
 					print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
-					sheet.update_acell('N' + str(row_start + idx), '=image("https://lh3.googleusercontent.com/YLDGZwvCqW5FocPEvAWEubrcJcie79_YQSXGs5mt4-LRpTg6Wtxyzbuqjka2FgS-IhOZr9GWHbKwVJVwLWimCPAIgPfCDPxX--sSmGnaMncp78AmWbDpQiecLa3G01kWlIFwDSagy6QE_dzs5fnr6CV6owsDQ_-rVnHlRorRy_JrUbA3oGsRDk-T5-h0C3RPpzleubA1q1xXzjmERgu4J1A7hExFB8TimZthmLj_QwMlP5VN6gg50nyhIRmsjYWZLChAVZRAo7IXt3ajaQavYldsSbiAdhpEbZmpiAvXUbPjzaCCSLFAZ_Jo1sDtdPDcLiflLUHRi_J9cnESvjU60Tb2YO8r1SZ7k1ikRswNE8917zph-JiOWqhAuBHDRTAA6-gwtDLy-SUEDTzBv9m2Kn0bh1IiWUdLCApSczAaVY9pB3gqgSkvju1dmf2gfOhNxEv58mc5R35CT4hIeO5HdmFZ48E_3jzD-JBXwBF_UQmff_x3fXqV7pDbv26d0L0StZTGab1QDtR_z_rON01PxmPYeWz9_cBCHUCBhh3HKB65xug9hl4oguXwEahsu8mLlTCg68-E9MFFkG4jLgqaUrnAzXqGiA_RwEw6DuQ=w124-h93-no",4,15,15)')
+					sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
 		cell_list[8].value = gpu.power_limit
