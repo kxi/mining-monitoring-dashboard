@@ -274,7 +274,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 					if gpu.power_limit <= pw_limit_ub * float(gpu.default_power_limit):
 						print("GPU #{}: Temperature is Too Low, Power Up. \
 						 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-						new_power_limit = min(int(gpu.power_limit) + power_delta_inc, gpu.default_power_limit)
+						new_power_limit = min(int(gpu.power_limit) + power_delta_inc, int(gpu.default_power_limit * pw_limit_ub))
 
 						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
