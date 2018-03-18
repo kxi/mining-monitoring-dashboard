@@ -269,53 +269,62 @@ def gpu_monitor(miner_id, DEBUG = False):
 				power_delta_inc = int(gpu.default_power_limit * 0.02)
 				power_delta_dec = int(gpu.default_power_limit * 0.03)
 
+				# Is Over Limit Now! Reduce Power Immediately:
+				if gpu.power_limit > pw_limit_ub * float(gpu.default_power_limit):
+					new_power_limit = pw_limit_ub * float(gpu.default_power_limit)
+					process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+					output, error = process.communicate()
+					print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
 
-				if gpu.temp_curr < temperature_lb:
-					if gpu.power_limit <= pw_limit_ub * float(gpu.default_power_limit):
-						print("GPU #{}: Temperature is Too Low, Power Up. \
-						 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-						new_power_limit = min(int(gpu.power_limit) + power_delta_inc, int(gpu.default_power_limit * pw_limit_ub))
+					sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
-						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-						output, error = process.communicate()
-						print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
+					gpu.power_limit = str(new_power_limit)
+					
+				else:
+					if gpu.temp_curr < temperature_lb:
+						if gpu.power_limit < pw_limit_ub * float(gpu.default_power_limit):
+							print("GPU #{}: Temperature is Too Low, Power Up. \
+							 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+							new_power_limit = min(int(gpu.power_limit) + power_delta_inc, int(gpu.default_power_limit * pw_limit_ub))
 
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							output, error = process.communicate()
+							print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
 
-						gpu.power_limit = str(new_power_limit)
+							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+
+							gpu.power_limit = str(new_power_limit)
 
 
-					else:
-						print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
-						  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+						else:
+							print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
+							  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 
+							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+
+					if gpu.temp_curr >= temperature_ub:
+						if gpu.power_limit > pw_limit_lb * float(gpu.default_power_limit):
+							print("GPU #{}: Temperature is Too High, Power Down. \
+							 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+							new_power_limit = max(int(gpu.power_limit) - power_delta_dec, int(gpu.default_power_limit * 0.5))
+
+							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							output, error = process.communicate()
+							print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
+							gpu.power_limit = str(new_power_limit)
+							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
+
+						else:
+							print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
+							Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+
+					if gpu.temp_curr < temperature_ub and \
+						gpu.temp_curr >= temperature_lb:
+						print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
 						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-
-				if gpu.temp_curr >= temperature_ub:
-					if gpu.power_limit > pw_limit_lb * float(gpu.default_power_limit):
-						print("GPU #{}: Temperature is Too High, Power Down. \
-						 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-						new_power_limit = max(int(gpu.power_limit) - power_delta_dec, int(gpu.default_power_limit * 0.5))
-
-						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-						output, error = process.communicate()
-						print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
-						gpu.power_limit = str(new_power_limit)
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
-
-
-
-					else:
-						print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
-						Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-
-				if gpu.temp_curr < temperature_ub and \
-					gpu.temp_curr >= temperature_lb:
-					print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
-					sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
 		cell_list[8].value = gpu.power_limit
