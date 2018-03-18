@@ -327,7 +327,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
-		cell_list[8].value = gpu.power_limit
+		cell_list[8].value = int(gpu.power_limit)
 
 		# Send update in batch mode
 		print("Start Sync to gspread")
