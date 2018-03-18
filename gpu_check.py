@@ -278,7 +278,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 					sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
-					gpu.power_limit = str(new_power_limit)
+					gpu.power_limit = str(int(new_power_limit))
 
 				else:
 					if gpu.temp_curr < temperature_lb:
@@ -293,7 +293,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
-							gpu.power_limit = str(new_power_limit)
+							gpu.power_limit = str(int(new_power_limit))
 
 
 						else:
@@ -312,7 +312,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
 							print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
-							gpu.power_limit = str(new_power_limit)
+							gpu.power_limit = str(int(new_power_limit))
 							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 						else:
