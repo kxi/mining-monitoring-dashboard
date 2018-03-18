@@ -279,13 +279,13 @@ def gpu_monitor(miner_id, DEBUG = False):
 					sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 					gpu.power_limit = str(new_power_limit)
-					
+
 				else:
 					if gpu.temp_curr < temperature_lb:
 						if gpu.power_limit < pw_limit_ub * float(gpu.default_power_limit):
 							print("GPU #{}: Temperature is Too Low, Power Up. \
 							 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-							new_power_limit = min(int(gpu.power_limit) + power_delta_inc, int(gpu.default_power_limit * pw_limit_ub))
+							new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
 
 							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
@@ -307,7 +307,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						if gpu.power_limit > pw_limit_lb * float(gpu.default_power_limit):
 							print("GPU #{}: Temperature is Too High, Power Down. \
 							 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-							new_power_limit = max(int(gpu.power_limit) - power_delta_dec, int(gpu.default_power_limit * 0.5))
+							new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
 
 							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
