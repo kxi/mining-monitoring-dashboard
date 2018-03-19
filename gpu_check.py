@@ -297,7 +297,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						sheet.update_acell('S' + str(row_start + idx), pw_limit_checkpoint)
 
 						# Adjust Power
-						new_power_limit = 110 # 110W is the Mininum Power That Doesn't Affect Hashrate
+						new_power_limit = max(110, pw_limit_lb * float(gpu.default_power_limit))
 						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
