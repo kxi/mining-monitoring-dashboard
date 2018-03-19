@@ -296,24 +296,28 @@ def gpu_monitor(miner_id, DEBUG = False):
 						pw_limit_checkpoint = cell_list[3].value # Store Latest Power Limit
 						sheet.update_acell('S' + str(row_start + idx), pw_limit_checkpoint)
 
-						# Adjust Power
-						new_power_limit = max(110, pw_limit_lb * float(gpu.default_power_limit))
+					# Adjust Power
+					new_power_limit = int(max(110, pw_limit_lb * float(gpu.default_power_limit)))
+
+					if int(gpu.power_limit) > new_power_limit:
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
-						gpu.power_limit = str(int(new_power_limit))
+					if int(gpu.power_limit) < new_power_limit:
+						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						output, error = process.communicate()
+						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
-						# # Clear Checkpoint Cell
-						# sheet.update_acell('S' + str(row_start + idx), "")
 
-
-
-					if pw_limit_curr: # Has Value, Last Run is Eth
-						print("Temperature Checkpoint Has Value, Last Run is Eth. Keep as Mininum Power")
+					if int(gpu.power_limit) == new_power_limit:
 						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+					gpu.power_limit = str(int(new_power_limit))
+
 
 
 				##############################################################
