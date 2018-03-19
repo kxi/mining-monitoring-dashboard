@@ -282,7 +282,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 				else:
 					if gpu.temp_curr < temperature_lb:
-						if gpu.power_limit < pw_limit_ub * float(gpu.default_power_limit):
+						if int(gpu.power_limit) < int(pw_limit_ub * float(gpu.default_power_limit)):
 							print("GPU #{}: Temperature is Too Low, Power Up. \
 							 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 							new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
@@ -304,7 +304,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 
 					if gpu.temp_curr >= temperature_ub:
-						if gpu.power_limit > pw_limit_lb * float(gpu.default_power_limit):
+						if int(gpu.power_limit) > int(pw_limit_lb * float(gpu.default_power_limit)):
 							print("GPU #{}: Temperature is Too High, Power Down. \
 							 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
 							new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
