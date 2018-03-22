@@ -418,23 +418,13 @@ def main():
 	interval = int(sys.argv[2])
 	print("This is Miner: {}".format(miner_id))
 
-
-
 	if len(sys.argv) == 4 and sys.argv[3] == "debug":
 		DEBUG = True
 	else:
 		DEBUG = False
 
-	if DEBUG:
-		gpu_monitor(miner_id, DEBUG)
+	# if DEBUG:
+	gpu_monitor(miner_id, DEBUG)
 
-	while 1:
-		try:
-			gpu_monitor(miner_id, DEBUG)
-		except Exception as e:
-			print(e)
-			pass
-
-		time.sleep(interval)
 
 main()
