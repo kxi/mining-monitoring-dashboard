@@ -15,7 +15,9 @@ def main():
         now = time.time()
 
         try:
-            process = subprocess.call("python gpu_check.py {} {}".format(miner_id, interval_sec), stderr=subprocess.STDOUT, timeout = timeout_sec)
+            # process = subprocess.call("python gpu_check.py {} {}".format(miner_id, interval_sec), stderr=subprocess.STDOUT, timeout = timeout_sec)
+            process = subprocess.call("python gpu_check.py {} {}".format(miner_id, interval_sec), stderr=subprocess.STDOUT, shell=True, timeout = timeout_sec)
+
 
         except Exception as e:
             print(e)

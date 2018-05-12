@@ -1,4 +1,5 @@
 import subprocess
+import os
 import sys
 import gspread
 from datetime import datetime
@@ -23,7 +24,10 @@ def nvidia_smi_call(DEBUG = False):
 	gpu_dict = dict()
 
 	prev_line = None
-	process = subprocess.Popen("nvidia-smi.exe -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	if os.name == 'posix':
+		process = subprocess.Popen("nvidia-smi -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	else:
+		process = subprocess.Popen("nvidia-smi.exe -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
 
 	gpu_index = 1
@@ -113,7 +117,11 @@ def check_miner(DEBUG):
 	MIN_PW_FLAG = False
 
 	miner_process_count = 0
-	process = subprocess.Popen("tasklist /V", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+
+	if os.name == 'posix':
+		process = subprocess.Popen("ps aux", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	else:
+		process = subprocess.Popen("tasklist /V", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
 
 	miner = ""
@@ -301,14 +309,21 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 					if int(gpu.power_limit) > new_power_limit:
 						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
-						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						if os.name == 'posix':
+							process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						else:
+							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
 
 					if int(gpu.power_limit) < new_power_limit:
 						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
-						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						if os.name == 'posix':
+							process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						else:
+							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
@@ -330,7 +345,10 @@ def gpu_monitor(miner_id, DEBUG = False):
 					if pw_limit_curr: # No Value, Last Run is Eth, Need to Recover
 						if pw_limit_curr <= pw_limit_ub and pw_limit_curr >= 0.5:
 							recovered_power_limit = pw_limit_curr * float(gpu.default_power_limit)
-							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, recovered_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							if os.name == 'posix':
+								process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, recovered_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							else:
+								process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, recovered_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
 							print("GPU #{}: Power Recovered: {}".format(gpu.gid, output))
 
@@ -351,7 +369,10 @@ def gpu_monitor(miner_id, DEBUG = False):
 						# Is Over Limit Now! Reduce Power Immediately:
 						if gpu.power_limit > int(pw_limit_ub * float(gpu.default_power_limit)):
 							new_power_limit = int(pw_limit_ub * float(gpu.default_power_limit))
-							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							if os.name == 'posix':
+								process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							else:
+								process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
 							print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
 
@@ -365,8 +386,10 @@ def gpu_monitor(miner_id, DEBUG = False):
 									print("GPU #{}: Temperature is Too Low, Power Up. \
 									 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 									new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
-
-									process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+									if os.name == 'posix':
+										process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+									else:
+										process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 									output, error = process.communicate()
 									print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
 
@@ -387,8 +410,10 @@ def gpu_monitor(miner_id, DEBUG = False):
 									print("GPU #{}: Temperature is Too High, Power Down. \
 									 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
 									new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
-
-									process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+									if os.name == 'posix':
+										process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+									else:
+										process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 									output, error = process.communicate()
 									print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
 									gpu.power_limit = str(int(new_power_limit))
