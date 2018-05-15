@@ -440,10 +440,9 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 def main():
 	miner_id = sys.argv[1]
-	interval = int(sys.argv[2])
-	print("This is Miner: {}".format(miner_id))
+	print("Checking Miner {} at [{}]".format(miner_id, datetime.now()))
 
-	if len(sys.argv) == 4 and sys.argv[3] == "debug":
+	if len(sys.argv) == 3 and sys.argv[2] == "debug":
 		DEBUG = True
 	else:
 		DEBUG = False
