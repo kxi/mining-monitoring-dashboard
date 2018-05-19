@@ -5,6 +5,9 @@ import gspread
 from datetime import datetime
 import time
 from oauth2client.service_account import ServiceAccountCredentials
+from logger import make_logger
+
+LOGGER = make_logger(sys.stderr, "dashboard")
 
 class GPU():
 	def __init__(self):
@@ -39,7 +42,7 @@ def nvidia_smi_call(DEBUG = False):
 			gid = int(line.split(':')[1])
 			gpu_dict[gid] = GPU()
 			gpu_dict[gid].gid = gpu_index
-			print("Found GPU: #{}".format(gpu_dict[gid].gid))
+			LOGGER.info("Found GPU: #{}".format(gpu_dict[gid].gid))
 			gpu_index += 1
 
 		if "Product Name" in line:
@@ -253,12 +256,12 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 		# IF Power AI Strategy is Enabled
 		if ENABLE_SMART_POWER_FLAG == "Y":
-			print("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
+			LOGGER.info("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
 
 			device_id = gpu.gid - 1
 
 			if gpu.utilization < 0.3:
-				print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
+				LOGGER.info("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
 				sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 			else:
@@ -288,7 +291,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 				# Just in Case, Wrong Value in Spreadsheet
 				if temperature_lb > 67 or pw_limit_lb < 0.5 or pw_limit_ub > 0.9:
-					print("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
+					LOGGER.critical("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
 					pass
 
 
@@ -300,7 +303,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 					print("Eth Mining Detected. Suppress Power")
 
 					if not pw_limit_curr: # No Value, Last Run is Non-Eth
-						print("Temperature Checkpoint Has No Value, Last Run is Non-Eth")
+						LOGGER.info("Temperature Checkpoint Has No Value, Last Run is Non-Eth")
 						pw_limit_checkpoint = cell_list[3].value # Store Latest Power Limit
 						sheet.update_acell('S' + str(row_start + idx), pw_limit_checkpoint)
 
@@ -315,7 +318,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 
 						output, error = process.communicate()
-						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
+						LOGGER.info("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
 
 					if int(gpu.power_limit) < new_power_limit:
@@ -325,7 +328,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						else:
 							process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
-						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
+						LOGGER.info("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
 
 					if int(gpu.power_limit) == new_power_limit:
@@ -340,7 +343,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 				##############################################################
 
 				if MIN_PW_FLAG == False:
-					print("Non-Eth Mining Detected. Enter Normal Power Cycle")
+					LOGGER.info("Non-Eth Mining Detected. Enter Normal Power Cycle")
 
 					if pw_limit_curr: # No Value, Last Run is Eth, Need to Recover
 						if pw_limit_curr <= pw_limit_ub and pw_limit_curr >= 0.5:
@@ -350,7 +353,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							else:
 								process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, recovered_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
-							print("GPU #{}: Power Recovered: {}".format(gpu.gid, output))
+							LOGGER.info("GPU #{}: Power Recovered: {}".format(gpu.gid, output))
 
 							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
@@ -359,7 +362,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							# Clear Checkpoint Cell
 							sheet.update_acell('S' + str(row_start + idx), "")
 						else:
-							print("You Power Limit Checkpoint is Not Reasonable, Please Check")
+							LOGGER.critical("You Power Limit Checkpoint is Not Reasonable, Please Check")
 
 					if not pw_limit_curr: # No Value, Last Run is Non-Eth
 
@@ -374,7 +377,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							else:
 								process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
-							print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
+							LOGGER.info("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
 
 							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
@@ -383,7 +386,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 						else:
 							if gpu.temp_curr < temperature_lb:
 								if int(gpu.power_limit) < int(pw_limit_ub * float(gpu.default_power_limit)):
-									print("GPU #{}: Temperature is Too Low, Power Up. \
+									LOGGER.info("GPU #{}: Temperature is Too Low, Power Up. \
 									 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 									new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
 									if os.name == 'posix':
@@ -391,7 +394,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 									else:
 										process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 									output, error = process.communicate()
-									print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
+									LOGGER.info("GPU #{}: Power Increased: {}".format(gpu.gid, output))
 
 									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
@@ -399,7 +402,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 
 								else:
-									print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
+									LOGGER.info("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
 									  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 
 									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
@@ -407,7 +410,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 							if gpu.temp_curr >= temperature_ub:
 								if int(gpu.power_limit) > int(pw_limit_lb * float(gpu.default_power_limit)):
-									print("GPU #{}: Temperature is Too High, Power Down. \
+									LOGGER.info("GPU #{}: Temperature is Too High, Power Down. \
 									 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
 									new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
 									if os.name == 'posix':
@@ -415,32 +418,32 @@ def gpu_monitor(miner_id, DEBUG = False):
 									else:
 										process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 									output, error = process.communicate()
-									print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
+									LOGGER.info("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
 									gpu.power_limit = str(int(new_power_limit))
 									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 								else:
-									print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
+									LOGGER.critical("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
 									Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
 									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 
 							if gpu.temp_curr < temperature_ub and \
 								gpu.temp_curr >= temperature_lb:
-								print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
+								LOGGER.info("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
 								sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
 		cell_list[8].value = int(gpu.power_limit)
 
 		# Send update in batch mode
-		print("Start Sync to gspread")
+		LOGGER.info("Start Sync to gspread")
 		sheet.update_cells(cell_list)
 
 
 def main():
 	miner_id = sys.argv[1]
-	print("Checking Miner {} at [{}]".format(miner_id, datetime.now()))
+	LOGGER.info("Checking Miner {} at [{}]".format(miner_id, datetime.now()))
 
 	if len(sys.argv) == 3 and sys.argv[2] == "debug":
 		DEBUG = True
