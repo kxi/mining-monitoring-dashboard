@@ -2,10 +2,11 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+import socket
 
 def main():
-    miner_id = sys.argv[1]
-    interval_sec = int(sys.argv[2])
+    miner_id = str(socket.gethostname())
+    interval_sec = int(sys.argv[1])
     timeout_sec = 180
     sleep_sec = interval_sec - timeout_sec
 

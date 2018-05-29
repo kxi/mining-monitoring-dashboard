@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 from oauth2client.service_account import ServiceAccountCredentials
 from logger import make_logger
+import socket
 
 LOGGER = make_logger(sys.stderr, "dashboard")
 
@@ -187,7 +188,7 @@ def gpu_monitor(miner_id, DEBUG = False):
     	'miner4': 26,
     	'miner5': 36,
     	'miner6': 45,
-    	'kai_test_miner': 53
+    	'kai-miner': 53
 	}
 
 	miner_row_start = {
@@ -197,7 +198,7 @@ def gpu_monitor(miner_id, DEBUG = False):
     	'miner4': 31,
     	'miner5': 41,
     	'miner6': 50,
-    	'kai_test_miner': 54
+    	'kai-miner': 54
 	}
 
 	up_icon_img_url = "http://users.tpg.com.au/heroxk82/up2.PNG"
@@ -442,10 +443,10 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 
 def main():
-	miner_id = sys.argv[1]
+	miner_id = str(socket.gethostname())
 	LOGGER.info("Checking Miner {} at [{}]".format(miner_id, datetime.now()))
 
-	if len(sys.argv) == 3 and sys.argv[2] == "debug":
+	if len(sys.argv) == 2 and sys.argv[2] == "debug":
 		DEBUG = True
 	else:
 		DEBUG = False
