@@ -4,6 +4,7 @@ import gspread
 from datetime import datetime
 import time
 from oauth2client.service_account import ServiceAccountCredentials
+import xmltodict
 
 class GPU():
 	def __init__(self):
@@ -12,6 +13,7 @@ class GPU():
 		self.utilization = None
 		self.temp_curr = None
 		self.core_clock = None
+		self.memory_clock = None
 		self.power_draw = None
 		self.power_limit = None
 		self.default_power_limit = None
@@ -23,69 +25,161 @@ def nvidia_smi_call(DEBUG = False):
 	gpu_dict = dict()
 
 	prev_line = None
-	process = subprocess.Popen("nvidia-smi.exe -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	process = subprocess.Popen("\"C:/Program Files/NVIDIA Corporation/NVSMI/nvidia-smi.exe\" -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
 
-	gpu_index = 1
 
-	for line in output.splitlines():
-		line = line.decode()
+	process = subprocess.Popen("\"C:/Program Files/NVIDIA Corporation/NVSMI/nvidia-smi.exe\" -x -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	output2, error2 = process.communicate()
 
-		if "GPU 00000000" in line:
-			gid = int(line.split(':')[1])
-			gpu_dict[gid] = GPU()
-			gpu_dict[gid].gid = gpu_index
-			print("Found GPU: #{}".format(gpu_dict[gid].gid))
-			gpu_index += 1
+	# info_json = json.loads(output2)
+	info_dict = xmltodict.parse(output2)
+	# print(info_dict['nvidia_smi_log']['gpu'][0])
 
-		if "Product Name" in line:
-			model = line.split(':')[1].replace("GeForce", "").strip(" ")
-			if DEBUG:
-				print(model)
-			gpu_dict[gid].model = model
+	print(f"Number of GPU: {len(info_dict['nvidia_smi_log']['gpu'])}")
 
-		if "Gpu" in line:
-			utilization = float(line.split(':')[1].split()[0])/100
-			if DEBUG:
-				print(utilization)
-			gpu_dict[gid].utilization = utilization
+	for i in range(len(info_dict['nvidia_smi_log']['gpu'])):
+		gid = i + 1
+		gpu_dict[gid] = GPU()
+		gpu_dict[gid].gid = gid
+		print("Found GPU: #{}".format(gpu_dict[gid].gid))
 
-		if "GPU Current Temp" in line:
-			temp_curr = int(line.split(':')[1].split()[0])
-			if DEBUG:
-				print(temp_curr)
-			gpu_dict[gid].temp_curr = temp_curr
 
-		if "Graphics" in line and prev_line.strip() == "Clocks":
-			core_clock = line.split(':')[1].strip()
-			if DEBUG:
-				print(core_clock)
-			gpu_dict[gid].core_clock = core_clock
+		model = info_dict['nvidia_smi_log']['gpu'][i]['product_name'].replace("GeForce", "").strip(" ")
+		if DEBUG:
+			print(model)
+		gpu_dict[gid].model = model
 
-		if "Power Draw" in line:
-			power_draw = line.split(':')[1].strip('W').strip()
-			if DEBUG:
-				print(power_draw)
-			gpu_dict[gid].power_draw = float(power_draw)
 
-		if "Enforced Power Limit" == line.split(':')[0].strip():
-			power_limit = line.split(':')[1].strip('W').strip()
-			if DEBUG:
-				print(power_limit)
-			gpu_dict[gid].power_limit = float(power_limit)
+		utilization = info_dict['nvidia_smi_log']['gpu'][i]['utilization']['gpu_util']
+		if DEBUG:
+			print(utilization)
+		gpu_dict[gid].utilization = utilization
 
-		if "Default Power Limit" == line.split(':')[0].strip():
-			default_power_limit = line.split(':')[1].strip('W').strip()
-			if DEBUG:
-				print(default_power_limit)
-			gpu_dict[gid].default_power_limit = float(default_power_limit)
+		temp_curr = int(info_dict['nvidia_smi_log']['gpu'][i]['temperature']['gpu_temp'].strip(' C'))
+		if DEBUG:
+			print(temp_curr)
+		gpu_dict[gid].temp_curr = temp_curr
 
-		if "Fan Speed" == line.split(':')[0].strip():
-			fan_speed = line.split(':')[1].strip()
-			if DEBUG:
-				print(fan_speed)
-			gpu_dict[gid].fan_speed = fan_speed
-		prev_line = line
+
+		core_clock = info_dict['nvidia_smi_log']['gpu'][i]['clocks']['graphics_clock']
+		if DEBUG:
+			print(core_clock)
+		gpu_dict[gid].core_clock = core_clock
+
+
+		memory_clock = info_dict['nvidia_smi_log']['gpu'][i]['clocks']['mem_clock']
+		if DEBUG:
+			print(memory_clock)
+		gpu_dict[gid].memory_clock = memory_clock
+
+		power_draw = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['power_draw'].strip('W').strip()
+		if DEBUG:
+			print(power_draw)
+		gpu_dict[gid].power_draw = float(power_draw)
+
+
+		power_limit = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['enforced_power_limit'].strip('W').strip()
+		if DEBUG:
+			print(power_limit)
+		gpu_dict[gid].power_limit = float(power_limit)
+
+
+		default_power_limit = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['default_power_limit'].strip('W').strip()
+		if DEBUG:
+			print(default_power_limit)
+		gpu_dict[gid].default_power_limit = float(default_power_limit)
+
+
+		fan_speed = info_dict['nvidia_smi_log']['gpu'][i]['fan_speed']
+		if DEBUG:
+			print(fan_speed)
+		gpu_dict[gid].fan_speed = fan_speed
+
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['product_name'].replace("GeForce", "").strip(" "))
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['utilization']['gpu_util'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['temperature']['gpu_temp'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['clocks']['graphics_clock'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['clocks']['mem_clock'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['power_readings']['power_draw'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['power_readings']['enforced_power_limit'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['power_readings']['default_power_limit'])
+		# print(info_dict['nvidia_smi_log']['gpu'][0]['fan_speed'])
+
+	# gpu_index = 1
+
+
+
+
+
+	# for line in output.splitlines():
+	# 	line = line.decode()
+	# 	# print(line)
+	# 	if "GPU 00000000" in line:
+	# 		gid = int(line.split(':')[1])
+	# 		# print(gid)
+	# 		gpu_dict[gid] = GPU()
+	# 		gpu_dict[gid].gid = gpu_index
+	# 		print("Found GPU: #{}".format(gpu_dict[gid].gid))
+	# 		gpu_index += 1
+	#
+	# 	if "Product Name" in line:
+	# 		model = line.split(':')[1].replace("GeForce", "").strip(" ")
+	# 		if DEBUG:
+	# 			print(model)
+	# 		gpu_dict[gid].model = model
+	#
+	# 	if "Gpu" in line:
+	# 		utilization = float(line.split(':')[1].split()[0])/100
+	# 		if DEBUG:
+	# 			print(utilization)
+	# 		gpu_dict[gid].utilization = utilization
+	#
+	# 	if "GPU Current Temp" in line:
+	# 		temp_curr = int(line.split(':')[1].split()[0])
+	# 		if DEBUG:
+	# 			print(temp_curr)
+	# 		gpu_dict[gid].temp_curr = temp_curr
+	#
+	# 	if "Graphics" in line and prev_line.strip() == "Clocks":
+	# 		# print(line)
+	# 		core_clock = line.split(':')[1].strip()
+	# 		if DEBUG:
+	# 			print(core_clock)
+	# 		gpu_dict[gid].core_clock = core_clock
+	#
+	# 	# Kai
+	# 	if "Memory" in line and prev_line.strip() == "Clocks":
+	# 		print(line)
+	# 		memory_clock = line.split(':')[1].strip()
+	# 		if DEBUG:
+	# 			print(memory_clock)
+	# 		gpu_dict[gid].memory_clock = memory_clock
+	#
+	# 	if "Power Draw" in line:
+	# 		power_draw = line.split(':')[1].strip('W').strip()
+	# 		if DEBUG:
+	# 			print(power_draw)
+	# 		gpu_dict[gid].power_draw = float(power_draw)
+	#
+	# 	if "Enforced Power Limit" == line.split(':')[0].strip():
+	# 		power_limit = line.split(':')[1].strip('W').strip()
+	# 		if DEBUG:
+	# 			print(power_limit)
+	# 		gpu_dict[gid].power_limit = float(power_limit)
+	#
+	# 	if "Default Power Limit" == line.split(':')[0].strip():
+	# 		default_power_limit = line.split(':')[1].strip('W').strip()
+	# 		if DEBUG:
+	# 			print(default_power_limit)
+	# 		gpu_dict[gid].default_power_limit = float(default_power_limit)
+	#
+	# 	if "Fan Speed" == line.split(':')[0].strip():
+	# 		fan_speed = line.split(':')[1].strip()
+	# 		if DEBUG:
+	# 			print(fan_speed)
+	# 		gpu_dict[gid].fan_speed = fan_speed
+	# 	prev_line = line
 
 	return gpu_dict
 
@@ -100,6 +194,7 @@ def nvidia_smi_call_stub():
 	gpu.utilization = 0.01
 	gpu.temp_curr = -5
 	gpu.core_clock = "1000 MHz"
+	gpu.memory_clock = "8000 MHz"
 	gpu.power_draw = "99"
 	gpu.power_limit = "100"
 	gpu.default_power_limit = "150"
@@ -218,7 +313,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 	# Script Run Time
 	row_start = sheet_row_start[miner_id]
-	range_build = 'L' + str(row_start) + ':' + 'L' + str(row_start)
+	range_build = 'M' + str(row_start) + ':' + 'M' + str(row_start)
 	cell_list = sheet.range(range_build)
 	cell_list[0].value = dt_now
 	sheet.update_cells(cell_list)
@@ -226,7 +321,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 	for idx, gpu_dict_key in enumerate(gpu_dict.keys()):
 		gpu = gpu_dict[gpu_dict_key]
-		range_build = 'B' + str(row_start + idx) + ':K' + str(row_start + idx)
+		range_build = 'B' + str(row_start + idx) + ':L' + str(row_start + idx)
 		cell_list = sheet.range(range_build)
 		cell_list[0].value = gpu.gid
 		cell_list[1].value = gpu.model
@@ -235,13 +330,14 @@ def gpu_monitor(miner_id, DEBUG = False):
 		cell_list[4].value = gpu.fan_speed
 		cell_list[5].value = gpu.utilization
 		cell_list[6].value = gpu.core_clock
-		cell_list[7].value = gpu.power_draw
-#		cell_list[8].value = gpu.power_limit
-		cell_list[9].value = gpu.default_power_limit
+		cell_list[7].value = gpu.memory_clock
+		cell_list[8].value = gpu.power_draw
+#		cell_list[9].value = gpu.power_limit
+		cell_list[10].value = gpu.default_power_limit
 
 
 		# Smart Power Logic
-		ENABLE_SMART_POWER_FLAG = sheet.acell('T' + str(row_start  + idx)).value
+		ENABLE_SMART_POWER_FLAG = sheet.acell('U' + str(row_start  + idx)).value
 
 		# IF Power AI Strategy is Enabled
 		if ENABLE_SMART_POWER_FLAG == "Y":
@@ -254,11 +350,11 @@ def gpu_monitor(miner_id, DEBUG = False):
 				sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 			else:
-				temperature_lb = int(sheet.acell('O' + str(row_start + idx)).value)
-				temperature_ub = int(sheet.acell('P' + str(row_start + idx)).value)
-				raw_pw_limit_lb_str = sheet.acell('Q' + str(row_start + idx)).value
-				raw_pw_limit_ub_str = sheet.acell('R' + str(row_start + idx)).value
-				raw_current_pw_limit = sheet.acell('S' + str(row_start  + idx)).value
+				temperature_lb = int(sheet.acell('P' + str(row_start + idx)).value)
+				temperature_ub = int(sheet.acell('Q' + str(row_start + idx)).value)
+				raw_pw_limit_lb_str = sheet.acell('R' + str(row_start + idx)).value
+				raw_pw_limit_ub_str = sheet.acell('S' + str(row_start + idx)).value
+				raw_current_pw_limit = sheet.acell('T' + str(row_start  + idx)).value
 
 				if '%' in raw_pw_limit_lb_str:
 					pw_limit_lb = float(raw_pw_limit_lb_str.strip('%'))/100.0
@@ -294,27 +390,27 @@ def gpu_monitor(miner_id, DEBUG = False):
 					if not pw_limit_curr: # No Value, Last Run is Non-Eth
 						print("Temperature Checkpoint Has No Value, Last Run is Non-Eth")
 						pw_limit_checkpoint = cell_list[3].value # Store Latest Power Limit
-						sheet.update_acell('S' + str(row_start + idx), pw_limit_checkpoint)
+						sheet.update_acell('T' + str(row_start + idx), pw_limit_checkpoint)
 
 					# Adjust Power
 					new_power_limit = int(max(110, pw_limit_lb * float(gpu.default_power_limit)))
 
 					if int(gpu.power_limit) > new_power_limit:
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
+						sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
 
 					if int(gpu.power_limit) < new_power_limit:
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+						sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 						process = subprocess.Popen("nvidia-smi.exe -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 						output, error = process.communicate()
 						print("GPU #{}: Power Suppressed: {}".format(gpu.gid, output))
 
 
 					if int(gpu.power_limit) == new_power_limit:
-						sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+						sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 					gpu.power_limit = str(int(new_power_limit))
 
@@ -334,12 +430,12 @@ def gpu_monitor(miner_id, DEBUG = False):
 							output, error = process.communicate()
 							print("GPU #{}: Power Recovered: {}".format(gpu.gid, output))
 
-							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+							sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
 							gpu.power_limit = str(int(recovered_power_limit))
 
 							# Clear Checkpoint Cell
-							sheet.update_acell('S' + str(row_start + idx), "")
+							sheet.update_acell('T' + str(row_start + idx), "")
 						else:
 							print("You Power Limit Checkpoint is Not Reasonable, Please Check")
 
@@ -355,7 +451,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 							output, error = process.communicate()
 							print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
 
-							sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
+							sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 							gpu.power_limit = str(int(new_power_limit))
 
@@ -370,7 +466,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 									output, error = process.communicate()
 									print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
 
-									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+									sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
 
 									gpu.power_limit = str(int(new_power_limit))
 
@@ -379,7 +475,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 									print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
 									  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
 
-									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+									sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 
 							if gpu.temp_curr >= temperature_ub:
@@ -392,18 +488,18 @@ def gpu_monitor(miner_id, DEBUG = False):
 									output, error = process.communicate()
 									print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
 									gpu.power_limit = str(int(new_power_limit))
-									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
+									sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
 								else:
 									print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
 									Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-									sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+									sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 
 							if gpu.temp_curr < temperature_ub and \
 								gpu.temp_curr >= temperature_lb:
 								print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
-								sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+								sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
 		cell_list[8].value = int(gpu.power_limit)
