@@ -25,15 +25,13 @@ def nvidia_smi_call(DEBUG = False):
 	gpu_dict = dict()
 
 	prev_line = None
-	process = subprocess.Popen("\"C:/Program Files/NVIDIA Corporation/NVSMI/nvidia-smi.exe\" -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	process = subprocess.Popen("nvidia-smi -x -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
 
+	if DEBUG:
+		print(output)
 
-	process = subprocess.Popen("\"C:/Program Files/NVIDIA Corporation/NVSMI/nvidia-smi.exe\" -x -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-	output2, error2 = process.communicate()
-
-	# info_json = json.loads(output2)
-	info_dict = xmltodict.parse(output2)
+	info_dict = xmltodict.parse(output)
 	# print(info_dict['nvidia_smi_log']['gpu'][0])
 
 	print(f"Number of GPU: {len(info_dict['nvidia_smi_log']['gpu'])}")
