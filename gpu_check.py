@@ -52,7 +52,7 @@ def nvidia_smi_call(DEBUG = False):
 		utilization = info_dict['nvidia_smi_log']['gpu'][i]['utilization']['gpu_util']
 		if DEBUG:
 			print(utilization)
-		gpu_dict[gid].utilization = utilization
+		gpu_dict[gid].utilization = float(utilization.rstrip(' %')) / 100.0
 
 		temp_curr = int(info_dict['nvidia_smi_log']['gpu'][i]['temperature']['gpu_temp'].strip(' C'))
 		if DEBUG:
@@ -326,7 +326,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 		cell_list[2].value = gpu.temp_curr
 		cell_list[3].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
 		cell_list[4].value = gpu.fan_speed
-		cell_list[5].value = float(gpu.utilization.rstrip(' %')) / 100.0
+		cell_list[5].value = gpu.utilization
 		cell_list[6].value = gpu.core_clock
 		cell_list[7].value = gpu.memory_clock
 		cell_list[8].value = gpu.power_draw
