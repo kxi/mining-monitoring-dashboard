@@ -25,71 +25,79 @@ def nvidia_smi_call(DEBUG = False):
 	gpu_dict = dict()
 
 	prev_line = None
-	process = subprocess.Popen("nvidia-smi -x -a", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+	process = subprocess.Popen("nvidia-smi -x -q", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 	output, error = process.communicate()
+	info_dict_gpu_count = xmltodict.parse(output)
+	num_GPU = int(info_dict_gpu_count['nvidia_smi_log']['attached_gpus'])
 
 	if DEBUG:
 		print(output)
 
-	info_dict = xmltodict.parse(output)
 	# print(info_dict['nvidia_smi_log']['gpu'][0])
 
-	print(f"Number of GPU: {len(info_dict['nvidia_smi_log']['gpu'])}")
+	print(f"Number of GPU: {num_GPU}")
 
-	for i in range(len(info_dict['nvidia_smi_log']['gpu'])):
+	for i in range(num_GPU):
+
+		process = subprocess.Popen(f"nvidia-smi -x -q -i {i}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+		output, error = process.communicate()
+
+		info_dict = xmltodict.parse(output)
+
+
 		gid = i + 1
 		gpu_dict[gid] = GPU()
 		gpu_dict[gid].gid = gid
 		print("Found GPU: #{}".format(gpu_dict[gid].gid))
 
 
-		model = info_dict['nvidia_smi_log']['gpu'][i]['product_name'].replace("GeForce", "").strip(" ")
+		model = info_dict['nvidia_smi_log']['gpu']['product_name'].replace("GeForce", "").strip(" ")
 		if DEBUG:
 			print(model)
 		gpu_dict[gid].model = model
 
 
-		utilization = info_dict['nvidia_smi_log']['gpu'][i]['utilization']['gpu_util']
+		utilization = info_dict['nvidia_smi_log']['gpu']['utilization']['gpu_util']
 		if DEBUG:
 			print(utilization)
 		gpu_dict[gid].utilization = float(utilization.rstrip(' %')) / 100.0
 
-		temp_curr = int(info_dict['nvidia_smi_log']['gpu'][i]['temperature']['gpu_temp'].strip(' C'))
+		temp_curr = int(info_dict['nvidia_smi_log']['gpu']['temperature']['gpu_temp'].strip(' C'))
 		if DEBUG:
 			print(temp_curr)
 		gpu_dict[gid].temp_curr = temp_curr
 
 
-		core_clock = info_dict['nvidia_smi_log']['gpu'][i]['clocks']['graphics_clock']
+		core_clock = info_dict['nvidia_smi_log']['gpu']['clocks']['graphics_clock']
 		if DEBUG:
 			print(core_clock)
 		gpu_dict[gid].core_clock = core_clock
 
 
-		memory_clock = info_dict['nvidia_smi_log']['gpu'][i]['clocks']['mem_clock']
+		memory_clock = info_dict['nvidia_smi_log']['gpu']['clocks']['mem_clock']
 		if DEBUG:
 			print(memory_clock)
 		gpu_dict[gid].memory_clock = memory_clock
 
-		power_draw = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['power_draw'].strip('W').strip()
+		power_draw = info_dict['nvidia_smi_log']['gpu']['power_readings']['power_draw'].strip('W').strip()
 		if DEBUG:
 			print(power_draw)
 		gpu_dict[gid].power_draw = float(power_draw)
 
 
-		power_limit = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['enforced_power_limit'].strip('W').strip()
+		power_limit = info_dict['nvidia_smi_log']['gpu']['power_readings']['enforced_power_limit'].strip('W').strip()
 		if DEBUG:
 			print(power_limit)
 		gpu_dict[gid].power_limit = float(power_limit)
 
 
-		default_power_limit = info_dict['nvidia_smi_log']['gpu'][i]['power_readings']['default_power_limit'].strip('W').strip()
+		default_power_limit = info_dict['nvidia_smi_log']['gpu']['power_readings']['default_power_limit'].strip('W').strip()
 		if DEBUG:
 			print(default_power_limit)
 		gpu_dict[gid].default_power_limit = float(default_power_limit)
 
 
-		fan_speed = info_dict['nvidia_smi_log']['gpu'][i]['fan_speed']
+		fan_speed = info_dict['nvidia_smi_log']['gpu']['fan_speed']
 		if DEBUG:
 			print(fan_speed)
 		gpu_dict[gid].fan_speed = fan_speed
@@ -345,7 +353,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 			if gpu.utilization < 0.3:
 				print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-				sheet.update_acell('N' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+				sheet.update_acell('O' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 			else:
 				temperature_lb = int(sheet.acell('P' + str(row_start + idx)).value)
