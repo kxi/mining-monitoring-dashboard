@@ -290,15 +290,20 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 
 	if response.status_code == 200:
 		nh_info = json.loads(response.content)
-
+		index = 1
 		for i in range(1, len(nh_info['devices'])):
-			print(nh_info['devices'][i]['speeds'][0])
-			algo = nh_info['devices'][i]['speeds'][0]['title']
-			speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
-			status = nh_info['devices'][i]['status']['description']
-			gpu_dict[i].nh_status = status
-			gpu_dict[i].nh_algo = algo
-			gpu_dict[i].nh_speed = speed
+			if nh_info['devices'][i]['deviceType']['description'] == 'CPU':
+				continue
+
+			print(nh_info['devices'][index]['speeds'][0])
+			algo = nh_info['devices'][index]['speeds'][0]['title']
+			speed = str(round(float(nh_info['devices'][index]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][index]['speeds'][0]['displaySuffix']
+			status = nh_info['devices'][index]['status']['description']
+			gpu_dict[index].nh_status = status
+			gpu_dict[index].nh_algo = algo
+			gpu_dict[index].nh_speed = speed
+
+			index += 1
 
 	return gpu_dict
 
