@@ -406,11 +406,21 @@ def gpu_monitor(miner_id, DEBUG = False):
 				sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
 			else:
-				temperature_lb = int(sheet.acell('S' + str(row_start + idx)).value)
-				temperature_ub = int(sheet.acell('T' + str(row_start + idx)).value)
-				raw_pw_limit_lb_str = sheet.acell('U' + str(row_start + idx)).value
-				raw_pw_limit_ub_str = sheet.acell('V' + str(row_start + idx)).value
-				raw_current_pw_limit = sheet.acell('W' + str(row_start  + idx)).value
+				smart_power_entry = sheet.batch_get(['S'+str(row_start + idx)+':'+'W'+str(row_start  + idx)])[0][0]
+				if DEBUG:
+					print(smart_power_entry)
+					
+				temperature_lb = int(smart_power_entry[0])
+				temperature_ub = int(smart_power_entry[1])
+				raw_pw_limit_lb_str = smart_power_entry[2]
+				raw_pw_limit_ub_str = smart_power_entry[3]
+				raw_current_pw_limit = smart_power_entry[4]
+
+				# temperature_lb = int(sheet.acell('S' + str(row_start + idx)).value)
+				# temperature_ub = int(sheet.acell('T' + str(row_start + idx)).value)
+				# raw_pw_limit_lb_str = sheet.acell('U' + str(row_start + idx)).value
+				# raw_pw_limit_ub_str = sheet.acell('V' + str(row_start + idx)).value
+				# raw_current_pw_limit = sheet.acell('W' + str(row_start  + idx)).value
 
 				if '%' in raw_pw_limit_lb_str:
 					pw_limit_lb = float(raw_pw_limit_lb_str.strip('%'))/100.0
