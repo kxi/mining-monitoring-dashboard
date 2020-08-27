@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from os import path
 import gspread
 from datetime import datetime
 import time
@@ -207,15 +208,19 @@ def check_miner(DEBUG):
 	return [miner, MIN_PW_FLAG]
 
 def get_nicehash_secret(gc, DEBUG=False):
-	sheet_auth = gc.open_by_url("https://docs.google.com/spreadsheets/d/1EwzqCCLXVznobht-8LG-sDWapaLlLrzn6jlsLcRyJnI").worksheet("secret")
-	secret = dict()
+	if path.exists("secret.json"):
+		with open('secret.json') as f:
+			secret = json.load(f)
+	else:
+		sheet_auth = gc.open_by_url("https://docs.google.com/spreadsheets/d/1EwzqCCLXVznobht-8LG-sDWapaLlLrzn6jlsLcRyJnI").worksheet("secret")
+		secret = dict()
 
-	secret_sheet_values = sheet_auth.batch_get(['A1:B9'])[0]
+		secret_sheet_values = sheet_auth.batch_get(['A1:B9'])[0]
 
-	for entry in secret_sheet_values:
-		if DEBUG:
-			print(entry)
-		secret[entry[0]] = entry[1]
+		for entry in secret_sheet_values:
+			if DEBUG:
+				print(entry)
+			secret[entry[0]] = entry[1]
 
 	return secret
 
@@ -287,7 +292,7 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 		nh_info = json.loads(response.content)
 
 		for i in range(1, len(nh_info['devices'])):
-			# print(nh_info['devices'][i]['speeds'][0])
+			print(nh_info['devices'][i]['speeds'][0])
 			algo = nh_info['devices'][i]['speeds'][0]['title']
 			speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
 			status = nh_info['devices'][i]['status']['description']

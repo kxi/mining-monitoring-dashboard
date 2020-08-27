@@ -100,3 +100,4 @@ ENV/
 # mypy
 .mypy_cache/
 nvidia-smi.exe
+secret.json
