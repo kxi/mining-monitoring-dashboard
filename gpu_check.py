@@ -287,8 +287,8 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 
 	response = s.request(method, url)
 
-	if DEBUG:
-		print(response.content)
+	# if DEBUG:
+	print(response.content)
 
 	if response.status_code == 200:
 		nh_info = json.loads(response.content)
@@ -297,11 +297,16 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 			if nh_info['devices'][i]['deviceType']['description'] == 'CPU':
 				continue
 
-			print(nh_info['devices'][i]['speeds'][0])
-			algo = nh_info['devices'][i]['speeds'][0]['title']
-			speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
 			status = nh_info['devices'][i]['status']['description']
 			gpu_dict[index+1].nh_status = status
+
+			if len(nh_info['devices'][1]['speeds']) > 0:
+				print(nh_info['devices'][i]['speeds'][0])
+				algo = nh_info['devices'][i]['speeds'][0]['title']
+				speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
+			else:
+				algo = ""
+				speed = ""
 			gpu_dict[index+1].nh_algo = algo
 			gpu_dict[index+1].nh_speed = speed
 
@@ -409,7 +414,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 				smart_power_entry = sheet.batch_get(['S'+str(row_start + idx)+':'+'W'+str(row_start  + idx)])[0][0]
 				if DEBUG:
 					print(smart_power_entry)
-					
+
 				temperature_lb = int(smart_power_entry[0])
 				temperature_ub = int(smart_power_entry[1])
 				raw_pw_limit_lb_str = smart_power_entry[2]
