@@ -336,11 +336,14 @@ def gpu_monitor(miner_id, DEBUG = False):
 	gpu_dict = nvidia_smi_call(DEBUG)
 	# gpu_dict = nvidia_smi_call_stub()
 
-
+	if miner_id in ['miner1', 'miner3', 'miner5']:
+		key_file = 'key.json'
+	else:
+		key_file = 'key2.json'
 
 	# use creds to create a client to interact with the Google Drive API
 	scope = ['https://spreadsheets.google.com/feeds']
-	creds = ServiceAccountCredentials.from_json_keyfile_name('key.json', scope)
+	creds = ServiceAccountCredentials.from_json_keyfile_name(key_file, scope)
 	gc = gspread.authorize(creds)
 	# Find a workbook by name and open the first sheet
 	# Make sure you use the right name here.
