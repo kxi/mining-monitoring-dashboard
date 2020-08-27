@@ -209,9 +209,11 @@ def check_miner(DEBUG):
 
 def get_nicehash_secret(gc, DEBUG=False):
 	if path.exists("secret.json"):
+		print('Load Secret From Local JSON File')
 		with open('secret.json') as f:
 			secret = json.load(f)
 	else:
+		print('Load Secret From Google Spreadsheet')
 		sheet_auth = gc.open_by_url("https://docs.google.com/spreadsheets/d/1EwzqCCLXVznobht-8LG-sDWapaLlLrzn6jlsLcRyJnI").worksheet("secret")
 		secret = dict()
 
