@@ -88,7 +88,7 @@ def nvidia_smi_call(DEBUG = False):
 		gpu_dict[gid].core_clock = core_clock
 
 
-		memory_clock = info_dict['nvidia_smi_log']['gpu']['clocks']['mem_clock']
+		memory_clock = info_dict['nvidia_smi_log']['gpu']['clocks']['mem_clock'].strip(" MHz")
 		if DEBUG:
 			print(memory_clock)
 		gpu_dict[gid].memory_clock = memory_clock
