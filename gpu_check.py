@@ -13,6 +13,8 @@ import requests
 import json
 from hashlib import sha256
 import optparse
+import re
+
 
 
 class GPU():
@@ -88,7 +90,7 @@ def nvidia_smi_call(DEBUG = False):
 		gpu_dict[gid].core_clock = core_clock
 
 
-		memory_clock = info_dict['nvidia_smi_log']['gpu']['clocks']['mem_clock'].strip(" MHz")
+		memory_clock = int(re.search("(\d+) MHz", info_dict['nvidia_smi_log']['gpu']['clocks']['mem_clock'])[1])
 		if DEBUG:
 			print(memory_clock)
 		gpu_dict[gid].memory_clock = memory_clock
