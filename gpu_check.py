@@ -300,6 +300,7 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 				continue
 
 			status = nh_info['devices'][i]['status']['description']
+			status = status.split('.')[-1]
 			gpu_dict[index+1].nh_status = status
 
 			if len(nh_info['devices'][1]['speeds']) > 0:
