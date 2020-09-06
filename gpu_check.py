@@ -231,6 +231,8 @@ def get_nicehash_secret(gc, DEBUG=False):
 
 def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 
+	gpu_dict_original = gpu_dict
+
 	rigId = nh_secret[miner_id]
 
 	host = 'https://api2.nicehash.com'
@@ -287,33 +289,42 @@ def check_nicehash(miner_id, gpu_dict, nh_secret, DEBUG=False):
 
 	print(url)
 
-	response = s.request(method, url)
+	try:
+		response = s.request(method, url)
+	except Exception as e:
+		print(f"NiceHash Query Error!!: {e}")
+		return gpu_dict_original
 
-	# if DEBUG:
-	print(response.content)
+	if DEBUG:
+		print(response.content)
 
 	if response.status_code == 200:
-		nh_info = json.loads(response.content)
-		index = 0
-		for i in range(len(nh_info['devices'])):
-			if nh_info['devices'][i]['deviceType']['description'] == 'CPU':
-				continue
+		try:
+			nh_info = json.loads(response.content)
 
-			status = nh_info['devices'][i]['status']['description']
-			status = status.split('.')[-1]
-			gpu_dict[index+1].nh_status = status
+			index = 0
+			for i in range(len(nh_info['devices'])):
+				if nh_info['devices'][i]['deviceType']['description'] == 'CPU':
+					continue
 
-			if len(nh_info['devices'][1]['speeds']) > 0:
-				print(nh_info['devices'][i]['speeds'][0])
-				algo = nh_info['devices'][i]['speeds'][0]['title']
-				speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
-			else:
-				algo = ""
-				speed = ""
-			gpu_dict[index+1].nh_algo = algo
-			gpu_dict[index+1].nh_speed = speed
+				status = nh_info['devices'][i]['status']['description']
+				status = status.split('.')[-1]
+				gpu_dict[index+1].nh_status = status
 
-			index += 1
+				if len(nh_info['devices'][1]['speeds']) > 0:
+					print(nh_info['devices'][i]['speeds'][0])
+					algo = nh_info['devices'][i]['speeds'][0]['title']
+					speed = str(round(float(nh_info['devices'][i]['speeds'][0]['speed']), 1)) + ' ' + nh_info['devices'][i]['speeds'][0]['displaySuffix']
+				else:
+					algo = ""
+					speed = ""
+				gpu_dict[index+1].nh_algo = algo
+				gpu_dict[index+1].nh_speed = speed
+
+				index += 1
+		except Exception as e:
+			print("NiceHash Query Error!!")
+			return gpu_dict_original
 
 	return gpu_dict
 
