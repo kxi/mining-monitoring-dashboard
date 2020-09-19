@@ -101,3 +101,5 @@ ENV/
 .mypy_cache/
 nvidia-smi.exe
 secret.json
+*.log
+*.err
