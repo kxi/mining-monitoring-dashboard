@@ -69,7 +69,7 @@ def nvidia_smi_call(DEBUG = False):
 
 	for i in range(num_GPU):
 
-		process = subprocess.Popen(f"nvidia-smi -x -q -i {i}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+		process = subprocess.Popen(f"{NVCMD} -x -q -i {i}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 		output, error = process.communicate()
 
 		info_dict = xmltodict.parse(output)
@@ -559,7 +559,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 							new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
 
-							process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+							process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 							output, error = process.communicate()
 							print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
 							LOGGER.info("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
@@ -586,7 +586,7 @@ def gpu_monitor(miner_id, DEBUG = False):
 				LOGGER.info("GPU #{}: Smart Power Disabled, Use Fixed Power Limit!".format(gpu.gid))
 				new_power_limit = int(pw_limit_curr * float(gpu.default_power_limit))
 
-				process = subprocess.Popen("nvidia-smi -i {} -pl {}".format(device_id, new_power_limit), stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+				process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 				output, error = process.communicate()
 				print("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
 				LOGGER.info("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
