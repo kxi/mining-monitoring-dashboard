@@ -464,141 +464,141 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 		device_id = gpu.gid - 1
 
-		if gpu.utilization < 0.3:
-			print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-			LOGGER.info("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-			sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+		# if gpu.utilization < 0.3:
+			# print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
+			# LOGGER.info("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
+			# sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
 
+		# else:
+		smart_power_entry = sheet.batch_get(['S'+str(row_start + idx)+':'+'W'+str(row_start  + idx)])[0][0]
+		if DEBUG:
+			print(smart_power_entry)
+			LOGGER.debug(smart_power_entry)
+
+		temperature_lb = int(smart_power_entry[0])
+		temperature_ub = int(smart_power_entry[1])
+		raw_pw_limit_lb_str = smart_power_entry[2]
+		raw_pw_limit_ub_str = smart_power_entry[3]
+		raw_current_pw_limit = smart_power_entry[4]
+
+		if '%' in raw_pw_limit_lb_str:
+			pw_limit_lb = float(raw_pw_limit_lb_str.strip('%'))/100.0
 		else:
-			smart_power_entry = sheet.batch_get(['S'+str(row_start + idx)+':'+'W'+str(row_start  + idx)])[0][0]
-			if DEBUG:
-				print(smart_power_entry)
-				LOGGER.debug(smart_power_entry)
+			pw_limit_lb = float(raw_pw_limit_lb_str)
 
-			temperature_lb = int(smart_power_entry[0])
-			temperature_ub = int(smart_power_entry[1])
-			raw_pw_limit_lb_str = smart_power_entry[2]
-			raw_pw_limit_ub_str = smart_power_entry[3]
-			raw_current_pw_limit = smart_power_entry[4]
+		if '%' in raw_pw_limit_ub_str:
+			pw_limit_ub = float(raw_pw_limit_ub_str.strip('%'))/100.0
+		else:
+			pw_limit_ub = float(raw_pw_limit_ub_str)
 
-			if '%' in raw_pw_limit_lb_str:
-				pw_limit_lb = float(raw_pw_limit_lb_str.strip('%'))/100.0
-			else:
-				pw_limit_lb = float(raw_pw_limit_lb_str)
+		if '%' in raw_current_pw_limit:
+			pw_limit_curr = float(raw_current_pw_limit.strip('%'))/100.0
+		elif not raw_current_pw_limit:
+			pw_limit_curr = None
+		else:
+			pw_limit_curr = float(raw_current_pw_limit)
 
-			if '%' in raw_pw_limit_ub_str:
-				pw_limit_ub = float(raw_pw_limit_ub_str.strip('%'))/100.0
-			else:
-				pw_limit_ub = float(raw_pw_limit_ub_str)
+		if ENABLE_SMART_POWER_FLAG == "Y":
+			print("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
+			LOGGER.info("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
 
-			if '%' in raw_current_pw_limit:
-				pw_limit_curr = float(raw_current_pw_limit.strip('%'))/100.0
-			elif not raw_current_pw_limit:
-				pw_limit_curr = None
-			else:
-				pw_limit_curr = float(raw_current_pw_limit)
-
-			if ENABLE_SMART_POWER_FLAG == "Y":
-				print("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
-				LOGGER.info("GPU #{}: Smart Power Enabled, Check and Adjust Power if Necessary!".format(gpu.gid))
-
-				# Just in Case, Wrong Value in Spreadsheet
-				if temperature_lb > 67 or pw_limit_lb < 0.5 or pw_limit_ub > 0.9:
-					print("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
-					LOGGER.info("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
-					pass
+			# Just in Case, Wrong Value in Spreadsheet
+			if temperature_lb > 67 or pw_limit_lb < 0.5 or pw_limit_ub > 0.9:
+				print("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
+				LOGGER.info("GPU #{}: Smart Power Value is Not Reasonable, Please Check Spreadsheet".format(gpu.gid))
+				pass
 
 
-				power_delta_inc = int(gpu.default_power_limit * 0.02)
-				power_delta_dec = int(gpu.default_power_limit * 0.03)
+			power_delta_inc = int(gpu.default_power_limit * 0.02)
+			power_delta_dec = int(gpu.default_power_limit * 0.03)
 
-				# Is Over Limit Now! Reduce Power Immediately:
-				if gpu.power_limit > int(pw_limit_ub * float(gpu.default_power_limit)):
-					new_power_limit = int(pw_limit_ub * float(gpu.default_power_limit))
-					process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-					output, error = process.communicate()
-					print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
-					LOGGER.info("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
-
-					sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
-
-					gpu.power_limit = str(int(new_power_limit))
-
-				else:
-					if gpu.temp_curr < temperature_lb:
-						if int(gpu.power_limit) < int(pw_limit_ub * float(gpu.default_power_limit)):
-							print("GPU #{}: Temperature is Too Low, Power Up. \
-							 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-							LOGGER.info("GPU #{}: Temperature is Too Low, Power Up. \
-							 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-							new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
-
-							process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-							output, error = process.communicate()
-							print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
-							LOGGER.info("GPU #{}: Power Increased: {}".format(gpu.gid, output))
-							sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
-
-							gpu.power_limit = str(int(new_power_limit))
-
-
-						else:
-							print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
-							  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-							LOGGER.info("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
-							  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
-							sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-
-					if gpu.temp_curr >= temperature_ub:
-						if int(gpu.power_limit) > int(pw_limit_lb * float(gpu.default_power_limit)):
-							print("GPU #{}: Temperature is Too High, Power Down. \
-							 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-							LOGGER.info("GPU #{}: Temperature is Too High, Power Down. \
-							 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-
-							new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
-
-							process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
-							output, error = process.communicate()
-							print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
-							LOGGER.info("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
-							gpu.power_limit = str(int(new_power_limit))
-							sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
-
-						else:
-							print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
-							Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-							LOGGER.info("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
-							Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
-							sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-
-					if gpu.temp_curr < temperature_ub and \
-						gpu.temp_curr >= temperature_lb:
-						print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
-						LOGGER.info("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
-						sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-			if ENABLE_SMART_POWER_FLAG == "N":
-
-				print("GPU #{}: Smart Power Disabled, Use Fixed Power Limit!".format(gpu.gid))
-				LOGGER.info("GPU #{}: Smart Power Disabled, Use Fixed Power Limit!".format(gpu.gid))
-				new_power_limit = int(pw_limit_curr * float(gpu.default_power_limit))
-
+			# Is Over Limit Now! Reduce Power Immediately:
+			if gpu.power_limit > int(pw_limit_ub * float(gpu.default_power_limit)):
+				new_power_limit = int(pw_limit_ub * float(gpu.default_power_limit))
 				process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 				output, error = process.communicate()
-				print("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
-				LOGGER.info("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
-				print("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
-				LOGGER.info("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
+				print("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
+				LOGGER.info("GPU #{}: Over Power Limit UB. Reset to UB: {}".format(gpu.gid, output))
 
-		cell_list[6].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
-		cell_list[12].value = int(gpu.power_limit)
+				sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
 
-		# Send update in batch mode
-		print("Start Sync to gspread")
-		sheet.update_cells(cell_list)
+				gpu.power_limit = str(int(new_power_limit))
+
+			else:
+				if gpu.temp_curr < temperature_lb:
+					if int(gpu.power_limit) < int(pw_limit_ub * float(gpu.default_power_limit)):
+						print("GPU #{}: Temperature is Too Low, Power Up. \
+						 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+						LOGGER.info("GPU #{}: Temperature is Too Low, Power Up. \
+						 Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+						new_power_limit = min(float(gpu.power_limit) + power_delta_inc, float(gpu.default_power_limit * pw_limit_ub))
+
+						process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						output, error = process.communicate()
+						print("GPU #{}: Power Increased: {}".format(gpu.gid, output))
+						LOGGER.info("GPU #{}: Power Increased: {}".format(gpu.gid, output))
+						sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(up_icon_img_url))
+
+						gpu.power_limit = str(int(new_power_limit))
+
+
+					else:
+						print("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
+						  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+						LOGGER.info("GPU #{}: Temperature is Too Low, However Already Hit Power Limit UB. \
+						  Current Power Limit = {} W, Power Limit UB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_ub * float(gpu.default_power_limit)))
+						sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+
+				if gpu.temp_curr >= temperature_ub:
+					if int(gpu.power_limit) > int(pw_limit_lb * float(gpu.default_power_limit)):
+						print("GPU #{}: Temperature is Too High, Power Down. \
+						 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+						LOGGER.info("GPU #{}: Temperature is Too High, Power Down. \
+						 Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+
+						new_power_limit = max(float(gpu.power_limit) - power_delta_dec, float(gpu.default_power_limit * 0.5))
+
+						process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+						output, error = process.communicate()
+						print("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
+						LOGGER.info("GPU #{}: Power Reduced: {}".format(gpu.gid, output))
+						gpu.power_limit = str(int(new_power_limit))
+						sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(down_icon_img_url))
+
+					else:
+						print("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
+						Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+						LOGGER.info("GPU #{}: Temperature is Too High, However Already Hit Power Limit LB.	\
+						Current Power Limit = {} W, Power Limit LB = {} W".format(gpu.gid, gpu.power_limit, pw_limit_lb * float(gpu.default_power_limit)))
+						sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+
+				if gpu.temp_curr < temperature_ub and \
+					gpu.temp_curr >= temperature_lb:
+					print("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
+					LOGGER.info("GPU #{}: Temperatur is Alright, No Change on Power.".format(gpu.gid))
+					sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
+
+		if ENABLE_SMART_POWER_FLAG == "N":
+
+			print("GPU #{}: Smart Power Disabled, Use Fixed Power Limit!".format(gpu.gid))
+			LOGGER.info("GPU #{}: Smart Power Disabled, Use Fixed Power Limit!".format(gpu.gid))
+			new_power_limit = int(pw_limit_curr * float(gpu.default_power_limit))
+
+			process = subprocess.Popen(f"{NVCMD} -i {device_id} -pl {new_power_limit}", stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+			output, error = process.communicate()
+			print("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
+			LOGGER.info("GPU #{}: New Power Set to: {}".format(gpu.gid, pw_limit_curr))
+			print("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
+			LOGGER.info("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
+
+	cell_list[6].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
+	cell_list[12].value = int(gpu.power_limit)
+
+	# Send update in batch mode
+	print("Start Sync to gspread")
+	sheet.update_cells(cell_list)
 
 
 def main():
