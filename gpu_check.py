@@ -464,12 +464,6 @@ def gpu_monitor(miner_id, DEBUG = False):
 
 		device_id = gpu.gid - 1
 
-		# if gpu.utilization < 0.3:
-			# print("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-			# LOGGER.info("GPU #{}: GPU is Not Mining, Don't Adjust Power".format(gpu.gid))
-			# sheet.update_acell('R' + str(row_start + idx), '=image("{}",4,15,15)'.format(stable_icon_img_url))
-
-		# else:
 		smart_power_entry = sheet.batch_get(['S'+str(row_start + idx)+':'+'W'+str(row_start  + idx)])[0][0]
 		if DEBUG:
 			print(smart_power_entry)
@@ -593,12 +587,12 @@ def gpu_monitor(miner_id, DEBUG = False):
 			print("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
 			LOGGER.info("GPU #{}: New Power Set to: {}W".format(gpu.gid, output))
 
-	cell_list[6].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
-	cell_list[12].value = int(gpu.power_limit)
+		cell_list[6].value = float(gpu.power_limit)*1.0/float(gpu.default_power_limit)
+		cell_list[12].value = int(gpu.power_limit)
 
-	# Send update in batch mode
-	print("Start Sync to gspread")
-	sheet.update_cells(cell_list)
+		# Send update in batch mode
+		print("Start Sync to gspread")
+		sheet.update_cells(cell_list)
 
 
 def main():
